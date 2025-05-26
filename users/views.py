@@ -161,7 +161,7 @@ def shipping_info(request):
         return render(request, 'users/shipping_information.html', {'form': form})
     messages.error(request, "You must be logged in to update your info.")
     return redirect('login')
-
+'''
 # Password Reset Views
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset_form.html'
@@ -185,3 +185,4 @@ class PasswordResetConfirmView(PasswordResetConfirmView):
 
 class PasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'
+'''

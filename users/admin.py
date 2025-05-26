@@ -9,7 +9,7 @@ class CustomUserAdmin(UserAdmin):
     form = CustomUserChangeForm
     model = CustomUser
 
-    list_display = (
+    list_display = ("id",
         "first_name", "last_name", "email", "unique_id", "get_parent_sponsor", "get_parent_node", 
         "is_staff", "is_active", "last_login", "date_joined"
     )
@@ -56,7 +56,7 @@ admin.site.register(CustomUser, CustomUserAdmin)
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'get_unique_id', 'get_parent_node', 'phone', 'address1', 'city', 'state', 'zipcode', 'country', 'old_cart')
+    list_display = ('id','user', 'get_unique_id', 'get_parent_node', 'phone', 'address1', 'city', 'state', 'zipcode', 'country', 'old_cart')
     search_fields = ('user__email', 'user__first_name', 'user__last_name', 'user__parent_node__email')
 
     def get_unique_id(self, obj):

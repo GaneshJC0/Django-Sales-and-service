@@ -8,7 +8,7 @@ class ProductImageInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline]
-    list_display = ('name', 'price', 'is_sale', 'stock_quantity', 'is_listed', 'created_at')
+    list_display = ('id','name', 'price', 'is_sale', 'stock_quantity', 'is_listed', 'created_at')
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
 

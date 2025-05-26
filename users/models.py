@@ -89,7 +89,9 @@ class Profile(models.Model):
     state = models.CharField(max_length=200, blank=True)
     zipcode = models.CharField(max_length=200, blank=True)
     country = models.CharField(max_length=200, blank=True)
-    old_cart = models.CharField(max_length=255, blank=True)
+    old_cart = models.JSONField(null=True, blank=True)
+
+
 
     def __str__(self):
         return self.user.email

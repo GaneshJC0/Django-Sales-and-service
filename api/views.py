@@ -83,7 +83,7 @@ class ProductViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         queryset = queryset.filter(query)
 
         # Debug: Log the constructed query (for development purposes only)
-        print(queryset.query)
+        #print(queryset.query)
 
         return queryset
 
