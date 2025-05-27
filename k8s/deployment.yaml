@@ -18,6 +18,13 @@ spec:
       labels:
         app: django-app
     spec:
+      volumes:
+        - name: static-files
+          emptyDir: {}
+        - name: env-volume
+          secret:
+            secretName: django-env-prod  # Mount this secret as .env.prod file
+
       initContainers:
         - name: django-init
           image: docker.io/ganeshjchoudhary/django-ecommerce:__IMAGE_TAG__
@@ -28,6 +35,10 @@ spec:
           volumeMounts:
             - name: static-files
               mountPath: /app/static
+            - name: env-volume
+              mountPath: /app/.env.prod
+              subPath: .env.prod
+
       containers:
         - name: django-app
           image: docker.io/ganeshjchoudhary/django-ecommerce:__IMAGE_TAG__
@@ -40,9 +51,9 @@ spec:
           volumeMounts:
             - name: static-files
               mountPath: /app/static
-      volumes:
-        - name: static-files
-          emptyDir: {}
+            - name: env-volume
+              mountPath: /app/.env.prod
+              subPath: .env.prod
 ---
 apiVersion: v1
 kind: Service
