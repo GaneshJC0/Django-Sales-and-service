@@ -1,3 +1,4 @@
+
 pipeline {
   agent any
 
@@ -37,20 +38,40 @@ pipeline {
 
               # Create .env.prod file with sensitive vars from environment
               cat <<EOF > .env.prod
-              DEBUG=False
-              SECRET_KEY=$DJANGO_SECRET_KEY
-              RAZORPAY_KEY_ID=$RAZORPAY_KEY_ID
-              RAZORPAY_KEY_SECRET=$RAZORPAY_KEY_SECRET
-              DB_NAME=$DB_NAME
-              DB_USER=$DB_USER
-              DB_PASSWORD=$DB_PASSWORD
-              DB_HOST=$DB_HOST
-              DB_PORT=5432
-              EOF
+DEBUG=False
+SECRET_KEY=$DJANGO_SECRET_KEY
+RAZORPAY_KEY_ID=$RAZORPAY_KEY_ID
+RAZORPAY_KEY_SECRET=$RAZORPAY_KEY_SECRET
+DB_NAME=$DB_NAME
+DB_USER=$DB_USER
+DB_PASSWORD=$DB_PASSWORD
+DB_HOST=$DB_HOST
+DB_PORT=5432
+EOF
 
-              # Recreate secret
+              # Recreate secret and verify
               kubectl delete secret django-env-prod -n ${K8S_NAMESPACE} --ignore-not-found
               kubectl create secret generic django-env-prod --from-file=.env.prod -n ${K8S_NAMESPACE}
+              kubectl get secret django-env-prod -n ${K8S_NAMESPACE} -o yaml
+              rm -f .env.prod
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Create Docker Image Pull Secret') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+          withKubeConfig(credentialsId: env.KUBECONFIG_CREDENTIALS_ID) {
+            sh '''
+              kubectl delete secret docker-secret -n ${K8S_NAMESPACE} --ignore-not-found
+              kubectl create secret docker-registry docker-secret \
+                --docker-username=$DOCKERHUB_USER \
+                --docker-password=$DOCKERHUB_PASS \
+                --docker-server=docker.io \
+                -n ${K8S_NAMESPACE}
+              kubectl get secret docker-secret -n ${K8S_NAMESPACE} -o yaml
             '''
           }
         }
@@ -60,10 +81,13 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         withKubeConfig(credentialsId: env.KUBECONFIG_CREDENTIALS_ID) {
-          sh """
+          sh '''
+            # Apply deployment and service
             sed 's|__IMAGE_TAG__|${IMAGE_TAG}|g' k8s/deployment.yaml | kubectl apply -n ${K8S_NAMESPACE} -f -
             kubectl set image deployment/django-app django-app=docker.io/${DOCKERHUB_USERNAME}/${DOCKERHUB_REPOSITORY}:${IMAGE_TAG} -n ${K8S_NAMESPACE}
-          """
+            # Clean up old ReplicaSets
+            kubectl delete rs -l app=django-app -n ${K8S_NAMESPACE} --ignore-not-found
+          '''
         }
       }
     }
@@ -71,7 +95,7 @@ pipeline {
     stage('Restart Deployment to Apply Secrets') {
       steps {
         withKubeConfig(credentialsId: env.KUBECONFIG_CREDENTIALS_ID) {
-          sh "kubectl rollout restart deployment django-app -n ${K8S_NAMESPACE}"
+          sh 'kubectl rollout restart deployment django-app -n ${K8S_NAMESPACE}'
         }
       }
     }
@@ -79,8 +103,27 @@ pipeline {
     stage('Verify Deployment') {
       steps {
         withKubeConfig(credentialsId: env.KUBECONFIG_CREDENTIALS_ID) {
-          sh "kubectl rollout status deployment/django-app -n ${K8S_NAMESPACE}"
+          sh '''
+            kubectl rollout status deployment/django-app -n ${K8S_NAMESPACE} --timeout=300s
+            kubectl get pods -n ${K8S_NAMESPACE} -o wide
+            kubectl describe pod -l app=django-app -n ${K8S_NAMESPACE}
+          '''
         }
+      }
+    }
+  }
+
+  post {
+    always {
+      sh 'rm -f .env.prod'
+    }
+    failure {
+      echo 'Pipeline failed. Check logs for details.'
+      withKubeConfig(credentialsId: env.KUBECONFIG_CREDENTIALS_ID) {
+        sh '''
+          kubectl get pods -n ${K8S_NAMESPACE} -o wide
+          kubectl describe pod -l app=django-app -n ${K8S_NAMESPACE}
+        '''
       }
     }
   }
