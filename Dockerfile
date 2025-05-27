@@ -17,6 +17,9 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the environment file dynamically created in workflow
+COPY .env.prod /app/.env.prod
+
 # Copy the full Django project codebase
 COPY . .
 
