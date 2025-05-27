@@ -14,7 +14,7 @@ static/
 *.log
 
 # Environment and secrets
-.env*
+.env
 sample_env.txt
 
 # Build tools
