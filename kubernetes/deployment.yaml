@@ -19,21 +19,30 @@ spec:
         app: django-app
     spec:
       initContainers:
-      - name: django-init
-        image: docker.io/yourname/django-app:latest
-        command: ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput"]
-        envFrom:
-          - secretRef:
-              name: django-secrets
+        - name: django-init
+          image: docker.io/ganeshjchoudhary/django-ecommerce:__IMAGE_TAG__
+          command: ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput"]
+          envFrom:
+            - secretRef:
+                name: django-secrets
+          volumeMounts:
+            - name: static-files
+              mountPath: /app/static
       containers:
-      - name: django-app
-        image: docker.io/yourname/django-app:latest
-        command: ["gunicorn", "main.wsgi:application", "--bind", "0.0.0.0:8000"]
-        ports:
-          - containerPort: 8000
-        envFrom:
-          - secretRef:
-              name: django-secrets
+        - name: django-app
+          image: docker.io/ganeshjchoudhary/django-ecommerce:__IMAGE_TAG__
+          command: ["gunicorn", "ecommerce.wsgi:application", "--bind", "0.0.0.0:8000"]
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: django-secrets
+          volumeMounts:
+            - name: static-files
+              mountPath: /app/static
+      volumes:
+        - name: static-files
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -45,7 +54,7 @@ spec:
     app: django-app
   type: NodePort
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
-    nodePort: 30008
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+      nodePort: 30008

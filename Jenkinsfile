@@ -3,10 +3,8 @@ pipeline {
 
   environment {
     DOCKERHUB_USERNAME = 'ganeshjchoudhary'
-    DOCKERHUB_REPOSITORY = 'django-app'
-    IMAGE_TAG = "${BUILD_NUMBER}"
-    DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
-    GITHUB_CREDENTIALS_ID = 'github-token'
+    DOCKERHUB_REPOSITORY = 'django-ecommerce'
+    IMAGE_TAG = 'latest'  // or specific tag like '42'
     KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
     K8S_NAMESPACE = 'django-app'
   }
@@ -14,26 +12,7 @@ pipeline {
   stages {
     stage('Checkout Code') {
       steps {
-        git credentialsId: env.GITHUB_CREDENTIALS_ID, url: 'https://github.com/YourUsername/django-app-repo.git', branch: 'main'
-      }
-    }
-
-    stage('Build Docker Image') {
-      steps {
-        script {
-          dockerImage = docker.build("${DOCKERHUB_USERNAME}/${DOCKERHUB_REPOSITORY}:${IMAGE_TAG}")
-        }
-      }
-    }
-
-    stage('Push to DockerHub') {
-      steps {
-        script {
-          docker.withRegistry('https://index.docker.io/v1/', env.DOCKERHUB_CREDENTIALS_ID) {
-            dockerImage.push()
-            dockerImage.push('latest')
-          }
-        }
+        git credentialsId: 'github-token', url: 'https://github.com/YourUsername/django-app-repo.git', branch: 'main'
       }
     }
 
@@ -47,7 +26,7 @@ pipeline {
             # Replace image tag dynamically in deployment YAML before apply
             sed 's|__IMAGE_TAG__|${IMAGE_TAG}|g' k8s/deployment.yaml | kubectl apply -n ${K8S_NAMESPACE} -f -
 
-            # Patch deployment to ensure image update
+            # Ensure image gets updated even if deployment exists
             kubectl set image deployment/django-app django-app=docker.io/${DOCKERHUB_USERNAME}/${DOCKERHUB_REPOSITORY}:${IMAGE_TAG} -n ${K8S_NAMESPACE}
             """
           }
