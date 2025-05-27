@@ -12,7 +12,7 @@ pipeline {
   stages {
     stage('Checkout Code') {
       steps {
-        git credentialsId: 'github-token', url: 'https://github.com/YourUsername/django-app-repo.git', branch: 'main'
+        git credentialsId: 'github-token', url: 'https://github.com/GaneshJC0/Django-Sales-and-service.git', branch: 'main'
       }
     }
 
