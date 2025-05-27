@@ -5,7 +5,9 @@ pipeline {
     DOCKERHUB_USERNAME = 'ganeshjchoudhary'
     DOCKERHUB_REPOSITORY = 'django-ecommerce'
     IMAGE_TAG = 'latest'  // or specific tag like '42'
+    DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
     KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
+    
     K8S_NAMESPACE = 'django-app'
   }
 
