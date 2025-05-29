@@ -46,3 +46,6 @@ Thumbs.db
 # Docker-related
 Dockerfile
 docker-compose.yml
+
+k8s/
+.sample_env
