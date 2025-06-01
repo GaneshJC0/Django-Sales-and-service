@@ -50,36 +50,48 @@ def process_payment(request):
     cart_instance = Cart(request)
     order_total = cart_instance.order_total()
 
-    # Create a Razorpay order
     data = {
-        'amount': int(order_total * 100),  # Amount in paise
+        'amount': int(order_total * 100),  # INR to paise
         'currency': 'INR',
-        'payment_capture': '1'  # Auto-capture payment
+        'payment_capture': 1
     }
+
     try:
         order = razorpay_client.order.create(data=data)
     except Exception as e:
-        messages.error(request, f'An error occurred while creating the payment order: {str(e)}')
+        messages.error(request, f'Error creating Razorpay order: {str(e)}')
         return redirect('payment')
 
-    # Save the Razorpay order ID in the session
     request.session['razorpay_order_id'] = order['id']
 
     context = {
         'order_id': order['id'],
         'razorpay_key_id': settings.RAZORPAY_KEY_ID,
-        'amount': order['amount'],
-        'currency': order['currency']
+        'amount_paise': order['amount'],        # amount in paise (for Razorpay)
+        'amount_rupees': order['amount'] / 100, # amount in rupees (for display)
+        'currency': order['currency'],
+        'user': request.user  # Needed for prefill
     }
     return render(request, 'payment/process_payment.html', context)
 
+
+    context = {
+        'order_id': order['id'],
+        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+        'amount': order['amount'],  # Already in paise
+        'currency': order['currency'],
+        'user': request.user  # Needed for prefill
+    }
+    return render(request, 'payment/process_payment.html', context)
+
+
 @csrf_exempt
 def payment_execute(request):
-    if request.method == 'GET':
-        payment_id = request.GET.get('razorpay_payment_id')
-        order_id = request.GET.get('razorpay_order_id')
-        signature = request.GET.get('razorpay_signature')
-
+    if request.method == 'POST':
+        payment_id = request.POST.get('razorpay_payment_id')
+        order_id = request.POST.get('razorpay_order_id')
+        signature = request.POST.get('razorpay_signature')
+        
         # Verify the payment signature
         params_dict = {
             'razorpay_order_id': order_id,
@@ -163,7 +175,7 @@ def payment_execute(request):
         return redirect('payment')
     
 def order_success(request):
-    return render(request, 'order_success.html')
+    return render(request, 'payment/order_success.html')
 
 def payment_cancel(request):
     messages.warning(request, 'Payment canceled.')

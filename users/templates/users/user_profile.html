@@ -3,40 +3,417 @@
 {% block title %}
     {{ user_data.first_name }}'s Profile
 {% endblock title %}
-#trypush
+
 {% block content %}
 <div class="container">
     <div class="content">
         <div class="main-content">
-            <section>
-                <div class="profile-picture">
-                    <img src="{{ user_data.profile_image }}" alt="Profile Picture" class="profile-img">
+            <!-- Profile Header Section -->
+            <section class="profile-header">
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        <img src="{{ user_data.profile_image }}" alt="Profile Picture" class="profile-img">
+                        <div class="profile-status"></div>
+                    </div>
+                    <div class="profile-info">
+                        <h1 class="profile-name">{{ user_data.first_name }} {{ user_data.last_name }}</h1>
+                        <p class="profile-id">ID: {{ user_data.unique_id }}</p>
+                    </div>
                 </div>
-                <h1 class="inventory-headings">
-                    {{ user_data.first_name }} {{ user_data.last_name }} (ID: {{ user_data.unique_id }})
-                </h1>
-                
-                <a href="{% url 'update_user' %}" class="login-button">Update User</a><br>
-                <a href="{% url 'update_info' %}" class="login-button">Billing Information</a><br>
-                <a href="{% url 'shipping_info' %}" class="login-button">Shipping Information</a><br><br>
+            </section>
 
-                <!-- Display Referral Link -->
-                <h3>Referral Link:</h3>
-                <input type="text" id="referral-link" value="{{ user_data.referral_link }}" readonly style="width: 100%; padding: 5px;">
-                <button onclick="copyReferralLink()" class="login-button">Copy Link</button>
-                
-                
+            <!-- Action Buttons Section -->
+            <section class="profile-actions">
+                <div class="action-grid">
+                    <a href="{% url 'update_user' %}" class="action-card">
+                        <div class="action-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                        </div>
+                        <div class="action-content">
+                            <h3>Update Profile</h3>
+                            <p>Manage your personal information</p>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'update_info' %}" class="action-card">
+                        <div class="action-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="action-content">
+                            <h3>Billing Information</h3>
+                            <p>Update payment details</p>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'shipping_info' %}" class="action-card">
+                        <div class="action-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <polyline points="17,11 19,13 23,9"/>
+                            </svg>
+                        </div>
+                        <div class="action-content">
+                            <h3>Shipping Information</h3>
+                            <p>Manage delivery addresses</p>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Referral Section -->
+            <section class="referral-section">
+                <div class="referral-card">
+                    <div class="referral-header">
+                        <h3>Share & Earn</h3>
+                        <p>Invite friends with your referral link</p>
+                    </div>
+                    <div class="referral-input-group">
+                        <input type="text" id="referral-link" value="{{ user_data.referral_link }}" readonly class="referral-input">
+                        <button onclick="copyReferralLink()" class="copy-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
             </section>
         </div>
     </div>
 </div>
 
+<style>
+/* Profile Header Styles */
+.profile-header {
+    margin-bottom: 2rem;
+}
+
+.profile-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+}
+
+.profile-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.profile-img:hover {
+    transform: scale(1.05);
+}
+
+.profile-status {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background: #4ade80;
+    border: 3px solid white;
+    border-radius: 50%;
+}
+
+.profile-info {
+    flex: 1;
+    z-index: 1;
+}
+
+.profile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-id {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Action Grid Styles */
+.profile-actions {
+    margin-bottom: 2rem;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.action-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    transition: left 0.5s ease;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border-color: #e2e8f0;
+}
+
+.action-card:hover::before {
+    left: 100%;
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.action-content h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.action-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+/* Referral Section Styles */
+.referral-section {
+    margin-top: 2rem;
+}
+
+.referral-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f1f5f9;
+}
+
+.referral-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.referral-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.referral-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.referral-input-group {
+    display: flex;
+    gap: 0.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 0.5rem;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.3s ease;
+}
+
+.referral-input-group:focus-within {
+    border-color: #667eea;
+}
+
+.referral-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    color: #1e293b;
+    outline: none;
+    border-radius: 8px;
+}
+
+.copy-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.copy-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.copy-button:active {
+    transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .profile-name {
+        font-size: 1.5rem;
+    }
+    
+    .action-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .referral-input-group {
+        flex-direction: column;
+    }
+    
+    .copy-button {
+        justify-content: center;
+    }
+}
+
+/* Toast Animation */
+@keyframes toast {
+    0% { transform: translateX(100%); opacity: 0; }
+    20% { transform: translateX(0); opacity: 1; }
+    80% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    animation: toast 3s ease-in-out;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+</style>
+
 <script>
 function copyReferralLink() {
     var copyText = document.getElementById("referral-link");
     copyText.select();
-    document.execCommand("copy");
-    alert("Referral link copied!");
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+    
+    // Modern clipboard API
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(copyText.value).then(function() {
+            showToast("Referral link copied successfully!");
+        }).catch(function() {
+            // Fallback for older browsers
+            document.execCommand("copy");
+            showToast("Referral link copied!");
+        });
+    } else {
+        // Fallback for very old browsers
+        document.execCommand("copy");
+        showToast("Referral link copied!");
+    }
+}
+
+function showToast(message) {
+    // Remove existing toast if any
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // Remove toast after animation
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
 }
 </script>
 

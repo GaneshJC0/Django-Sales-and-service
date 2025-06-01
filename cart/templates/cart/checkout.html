@@ -38,7 +38,7 @@
         </div>
         <div class="shipping-information">
             <h1>Shipping Information</h1>
-            <form method="post">
+            <form method="POST">
                 {% csrf_token %}
                 {{ form.as_p }}
                 <input type="submit" value="Update and Proceed to Billing" style="cursor: pointer;">

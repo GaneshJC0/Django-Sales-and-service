@@ -20,12 +20,12 @@
                 <div class="cart-item-name">{{ item.name }}</div>
                 <div class="cart-item-price">x</div>
                 <div class="cart-item-quantity"><p>{{ item.quantity }}</p></div>
-                <div class="cart-item-total">$ {{ item.total_price }}</div>
+                <div class="cart-item-total">Rs. {{ item.total_price }}</div>
                 <div class="cart-item-remove"></div>
                 {% endfor %}
             </div>
             <p>Items: {{ total_quantity }}</p>
-            <p>Amount: ${{ order_total }}</p>
+            <p>Amount: Rs.{{ order_total }}</p>
         </div>
     </div>
     <div class="customer-information">
@@ -38,7 +38,7 @@
         </div>
         <div class="shipping-information">
             <h1>Shipping Information</h1>
-            <form method="post">
+            <form method="POST">
                 {% csrf_token %}
                 {{ form.as_p }}
                 <input type="submit" value="Confirm and Proceed to Checkout" style="cursor: pointer;">
