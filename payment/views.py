@@ -10,6 +10,7 @@ from cart.cart import Cart
 from cart.models import Order, OrderItem
 from store.models import Product
 from users.models import ShippingAddress, Profile
+from payment.models import Payment
 
 # Initialize Razorpay client
 from .razorpay import razorpay_client
@@ -138,6 +139,16 @@ def payment_execute(request):
                     shipping_address=shipping_address
                 )
                 order.save()
+                # Save Razorpay payment info
+                # Create payment record
+                Payment.objects.create(
+                    user=user,
+                    order=order,
+                    razorpay_order_id=order_id,
+                    razorpay_payment_id=payment_id,
+                    status=payment['status'],  # e.g., 'captured'
+                    amount=amount_paid
+                )
 
                 # Create OrderItems
                 for item in cart_items:

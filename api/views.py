@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from rest_framework.response import Response
 from users.models import Profile
-from .serializers import ProfileSerializer
+from .serializers import OrderSerializer, ProfileSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, mixins
 
@@ -26,6 +26,8 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 import json
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
@@ -370,3 +372,10 @@ def create_order(request):
     except Exception as e:
         logger.error(f"Error creating order: {e}")
         return Response({'error': 'An error occurred while creating the order'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_order_history_api(request):
+    orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data)

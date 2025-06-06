@@ -11,7 +11,7 @@ from .forms import (
 from .models import CustomUser, Profile, ShippingAddress
 import json
 from cart.cart import Cart
-
+from cart.models import Order 
 # Register User with Referral System# Register User with Referral System
 def register_user(request):
     # Check if referral ID is in GET request and store it in session
@@ -129,7 +129,7 @@ def update_password(request):
     messages.error(request, "You must be logged in to update your password.")
     return redirect('home')
 
-# User Profile View
+
 def user_profile(request):
     if request.user.is_authenticated:
         profile = Profile.objects.get(user=request.user)
@@ -142,10 +142,17 @@ def user_profile(request):
             'parent_sponsor': request.user.parent_sponsor.unique_id if request.user.parent_sponsor else "None",
             'profile_image': profile.image.url if profile.image else '/media/default/pic.png',
         }
-        return render(request, 'users/user_profile.html', {'user_data': user_data})
+
+        # ✅ Fetch order history
+        orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
+
+        return render(request, 'users/user_profile.html', {
+            'user_data': user_data,
+            'orders': orders,
+        })
+
     messages.error(request, "You must be logged in to view your profile.")
     return redirect('login')
-
 # Shipping Information View
 def shipping_info(request):
     if request.user.is_authenticated:

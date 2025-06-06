@@ -6,6 +6,14 @@ from django.contrib import messages
 from django.http import JsonResponse
 from users.forms import ShippingAddressForm
 from users.models import ShippingAddress
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from cart.models import Order
+
+
+from django.shortcuts import get_object_or_404
+
+
 
 
 def cart(request):
@@ -102,3 +110,13 @@ def checkout(request):
         'user_profile': user_profile,
     }
     return render(request, 'cart/checkout.html', context)
+
+@login_required
+def order_history(request):
+    orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
+    return render(request, 'users/order_history.html', {'orders': orders})
+
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'users/order_detail.html', {'order': order})

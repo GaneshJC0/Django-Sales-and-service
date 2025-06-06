@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, ProductViewSet, ProductImageViewSet, ProfileViewSet, MobileBannerViewSet, ShippingAddressViewSet, create_order
+from .views import CategoryViewSet, ProductViewSet, ProductImageViewSet, ProfileViewSet, MobileBannerViewSet, ShippingAddressViewSet, create_order, user_order_history_api 
 from . import views
 
 router = DefaultRouter()
@@ -17,6 +17,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('get_csrf_token/', views.get_csrf_token, name='get_csrf_token'),
     path('create-order/', create_order, name='create_order'),
+    path('orders/history/', user_order_history_api, name='user_order_history'),
 	
 ]
 
