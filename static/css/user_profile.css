@@ -259,6 +259,114 @@
     }
 }
 
+/* Referral Actions Styling */
+.referral-actions {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f1f3f4;
+}
+
+.referral-manage-link {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #495057;
+    transition: all 0.3s ease;
+    gap: 1rem;
+}
+
+.referral-manage-link:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: #495057;
+}
+
+.referral-link-icon {
+    width: 44px;
+    height: 44px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.referral-link-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.referral-link-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.referral-link-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.referral-link-arrow {
+    color: #adb5bd;
+    transition: transform 0.2s ease;
+}
+
+.referral-manage-link:hover .referral-link-arrow {
+    transform: translateX(4px);
+}
+
+.referral-manage-link:hover .referral-link-icon {
+    background: #007bff;
+    color: white;
+}
+
+
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .referral-manage-link {
+        padding: 0.875rem;
+    }
+    
+    .referral-link-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .referral-link-title {
+        font-size: 0.95rem;
+    }
+    
+    .referral-link-subtitle {
+        font-size: 0.8rem;
+    }
+}
+
+
 /* Toast Animation */
 @keyframes toast {
     0% { transform: translateX(100%); opacity: 0; }

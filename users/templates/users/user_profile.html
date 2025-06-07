@@ -1,5 +1,5 @@
 {% extends 'main/base.html' %}
-
+{% load static %}
 {% block title %}
     {{ user_data.first_name }}'s Profile
 {% endblock title %}
@@ -12,7 +12,13 @@
             <section class="profile-header">
                 <div class="profile-card">
                     <div class="profile-avatar">
-                        <img src="{{ user_data.profile_image }}" alt="Profile Picture" class="profile-img">
+                        
+                         <!-- Display current profile picture -->
+            {% if user.profile.image %}
+                <img src="{{ user.profile.image.url }}" alt="Current Profile Picture" class="profile-img" >
+            {% else %}
+                <img src="{% static 'images/avatar.png' %}" alt="Default Avatar" class="profile-img" >
+            {% endif %}
                         <div class="profile-status"></div>
                     </div>
                     <div class="profile-info">
@@ -97,6 +103,28 @@
                             Copy
                         </button>
                     </div>
+                    
+                    <!-- Styled Referral Management Link -->
+                    <div class="referral-actions">
+                        <a href="{% url 'my_referrals' %}" class="referral-manage-link">
+                            <div class="referral-link-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="8.5" cy="7" r="4"/>
+                                    <path d="M20 8v6M23 11l-3 3-3-3"/>
+                                </svg>
+                            </div>
+                            <div class="referral-link-content">
+                                <span class="referral-link-title">View My Referrals</span>
+                                <span class="referral-link-subtitle">Track your referral performance</span>
+                            </div>
+                            <div class="referral-link-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </section>
         </div>
@@ -146,5 +174,6 @@ function showToast(message) {
     }, 3000);
 }
 </script>
+
 
 {% endblock content %}

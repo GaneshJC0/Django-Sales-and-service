@@ -11,7 +11,8 @@ from .forms import (
 from .models import CustomUser, Profile, ShippingAddress
 import json
 from cart.cart import Cart
-from cart.models import Order 
+from cart.models import Order
+from django.contrib.auth.decorators import login_required 
 # Register User with Referral System# Register User with Referral System
 def register_user(request):
     # Check if referral ID is in GET request and store it in session
@@ -88,17 +89,26 @@ def logout_user(request):
     messages.success(request, 'You have been logged out!')
     return redirect('home')
 
-# Update User
 def update_user(request):
-    if request.user.is_authenticated:
-        user_form = UpdateUserForm(request.POST or None, instance=request.user)
+    user = request.user
+    profile = user.profile
+
+    if request.method == 'POST':
+        user_form = UpdateUserForm(request.POST, request.FILES, instance=user)
         if user_form.is_valid():
             user_form.save()
+
+            # Save profile image if provided
+            if 'image' in request.FILES:
+                profile.image = request.FILES['image']
+                profile.save()
+
             messages.success(request, 'User details updated.')
             return redirect('home')
-        return render(request, 'users/update_user.html', {'user_form': user_form})
-    messages.error(request, "You must be logged in to update your details.")
-    return redirect('home')
+    else:
+        user_form = UpdateUserForm(instance=user, initial={'image': profile.image})
+
+    return render(request, 'users/update_user.html', {'user_form': user_form})
 
 # Update User Profile Info
 def update_info(request):
@@ -168,6 +178,15 @@ def shipping_info(request):
         return render(request, 'users/shipping_information.html', {'form': form})
     messages.error(request, "You must be logged in to update your info.")
     return redirect('login')
+
+@login_required
+def my_referrals_view(request):
+    referred_users = request.user.sponsored_users.all()
+    return render(request, 'users/my_referrals.html', {'referred_users': referred_users})
+
+
+
+
 '''
 # Password Reset Views
 class CustomPasswordResetView(PasswordResetView):

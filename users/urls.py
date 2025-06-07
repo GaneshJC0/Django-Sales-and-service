@@ -12,6 +12,7 @@ urlpatterns = [
     path('update_password/', views.update_password, name='update_password'),
     path('update_info/', views.update_info, name='update_info'),
     path('shipping_info/', views.shipping_info, name='shipping_info'),
+    path('my-referrals/', views.my_referrals_view, name='my_referrals'),
 
     # Password Reset URLs
     #path('password_reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),

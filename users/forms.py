@@ -40,21 +40,23 @@ class CustomUserRegistrationForm(UserCreationForm):
         return email
 
 
-class UpdateUserForm(UserChangeForm):
-    """Form for updating user details without changing password"""
+class UpdateUserForm(forms.ModelForm):
+    """Form to update CustomUser + Profile image"""
     password = None  # Hide password field
 
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'placeholder': 'First Name'}))
     last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'placeholder': 'Last Name'}))
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'placeholder': 'Email'}))
     unique_id = forms.CharField(max_length=50, required=False, disabled=True, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    
+    # From Profile model
+    image = forms.ImageField(required=False)
 
     class Meta:
         model = CustomUser
         fields = ['first_name', 'last_name', 'email', 'unique_id']
 
     def clean_email(self):
-        """Ensure the email remains unique when updating"""
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("A user with this email already exists.")
