@@ -18,6 +18,7 @@ urlpatterns = [
     path('get_csrf_token/', views.get_csrf_token, name='get_csrf_token'),
     path('create-order/', create_order, name='create_order'),
     path('orders/history/', user_order_history_api, name='user_order_history'),
+    path('user/referrals/', views.referred_users_view, name='user-referrals'),
 	
 ]
 

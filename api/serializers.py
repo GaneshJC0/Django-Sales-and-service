@@ -86,4 +86,14 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
 
-        
+# serializers.py
+
+class ReferredUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = ['full_name', 'email', 'date_joined']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"

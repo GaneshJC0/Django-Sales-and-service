@@ -28,6 +28,7 @@ import json
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from .serializers import ReferredUserSerializer
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
@@ -378,4 +379,14 @@ def create_order(request):
 def user_order_history_api(request):
     orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
     serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def referred_users_view(request):
+    user = request.user
+    referred_users = user.sponsored_users.all()
+    serializer = ReferredUserSerializer(referred_users, many=True)
     return Response(serializer.data)

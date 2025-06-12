@@ -44,7 +44,7 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         if referral_code:
             referred_by = CustomUser.objects.filter(unique_id=referral_code).first()
             
-        user = CustomUser.objects.create(**validated_data, referred_by=referred_by)
+        user = CustomUser.objects.create(**validated_data, parent_sponsor=referred_by)
         user.set_password(password)
         user.save()
         return user
@@ -57,3 +57,4 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['user', 'image', 'phone', 'address1', 'address2', 'city', 'state', 'zipcode', 'country', 'old_cart', 'unique_id']
+        
