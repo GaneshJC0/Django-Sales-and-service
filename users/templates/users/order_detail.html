@@ -21,22 +21,29 @@
                         <p>Placed on {{ order.date_ordered|date:"F d, Y \a\t g:i A" }}</p>
                     </div>
                     <div class="header-status">
-                        {% if order.is_shipped %}
-                            <span class="status-badge shipped">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 6L9 17l-5-5"/>
-                                </svg>
-                                Shipped
-                            </span>
-                        {% else %}
-                            <span class="status-badge pending">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <polyline points="12,6 12,12 16,14"/>
-                                </svg>
-                                Processing
-                            </span>
-                        {% endif %}
+                        {% if order.is_delivered %}
+                                            <span class="status-badge delivered">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M20 6L9 17l-5-5"/>
+                                                </svg>
+                                                Delivered
+                                            </span>
+                                        {% elif order.is_shipped %}
+                                            <span class="status-badge shipped">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M20 6L9 17l-5-5"/>
+                                                </svg>
+                                                Shipped
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge pending">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <circle cx="12" cy="12" r="10"/>
+                                                    <polyline points="12,6 12,12 16,14"/>
+                                                </svg>
+                                                Pending
+                                            </span>
+                                        {% endif %}
                     </div>
                 </div>
             </section>
@@ -60,7 +67,7 @@
                             {% for item in order.items.all %}
                                 <div class="item-card">
                                     <div class="item-info">
-                                        <h4 class="item-title">{{ item.product.title }}</h4>
+                                        <h4 class="item-title">{{ item.product.name }}</h4>
                                         <div class="item-details">
                                             <span class="quantity">Qty: {{ item.quantity }}</span>
                                             <span class="unit-price">₹{{ item.price }} each</span>

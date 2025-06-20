@@ -82,6 +82,11 @@
     background: rgba(16, 185, 129, 0.9);
     color: white;
 }
+.status-badge.delivered {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
 
 .status-badge.pending {
     background: rgba(245, 158, 11, 0.9);

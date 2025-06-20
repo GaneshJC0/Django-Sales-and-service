@@ -12,6 +12,8 @@ class Order(models.Model):
     date_ordered = models.DateTimeField(auto_now_add=True)
     is_shipped = models.BooleanField(default=False)
     shipped_at = models.DateTimeField(null=True, blank=True)
+    is_delivered = models.BooleanField(default=False)
+    delivered_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Order {self.id}"
