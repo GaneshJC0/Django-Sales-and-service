@@ -1,4 +1,3 @@
-# views.py
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings
@@ -6,25 +5,31 @@ from django.views.decorators.csrf import csrf_exempt
 import razorpay
 from razorpay.errors import SignatureVerificationError
 
-from cart.cart import Cart
-from cart.models import Order, OrderItem
+from cart.models import Cart, CartItem, Order, OrderItem
 from store.models import Product
 from users.models import ShippingAddress, Profile
 from payment.models import Payment
-
-# Initialize Razorpay client
 from .razorpay import razorpay_client
 
 @csrf_exempt
 def payment(request):
-    cart_instance = Cart(request)
+    try:
+        cart_instance = Cart.objects.get(user=request.user)
+    except Cart.DoesNotExist:
+        messages.error(request, "Your cart is empty.")
+        return redirect('store')
+
     cart_items = cart_instance.get_prods()
     cart_quantities = cart_instance.get_quants()
     total_quantity = sum(cart_quantities.values())
     order_total = cart_instance.order_total()
 
-    shipping = ShippingAddress.objects.get(user=request.user)
-    
+    try:
+        shipping = ShippingAddress.objects.get(user=request.user)
+    except ShippingAddress.DoesNotExist:
+        messages.error(request, "Shipping address not found.")
+        return redirect('store')
+
     request.session['shipping'] = {
         'email': shipping.email,
         'phone': shipping.phone,
@@ -48,7 +53,12 @@ def payment(request):
 
 @csrf_exempt
 def process_payment(request):
-    cart_instance = Cart(request)
+    try:
+        cart_instance = Cart.objects.get(user=request.user)
+    except Cart.DoesNotExist:
+        messages.error(request, "No active cart found.")
+        return redirect('store')
+
     order_total = cart_instance.order_total()
 
     data = {
@@ -68,23 +78,12 @@ def process_payment(request):
     context = {
         'order_id': order['id'],
         'razorpay_key_id': settings.RAZORPAY_KEY_ID,
-        'amount_paise': order['amount'],        # amount in paise (for Razorpay)
-        'amount_rupees': order['amount'] / 100, # amount in rupees (for display)
+        'amount_paise': order['amount'],
+        'amount_rupees': order['amount'] / 100,
         'currency': order['currency'],
-        'user': request.user  # Needed for prefill
+        'user': request.user
     }
     return render(request, 'payment/process_payment.html', context)
-
-
-    context = {
-        'order_id': order['id'],
-        'razorpay_key_id': settings.RAZORPAY_KEY_ID,
-        'amount': order['amount'],  # Already in paise
-        'currency': order['currency'],
-        'user': request.user  # Needed for prefill
-    }
-    return render(request, 'payment/process_payment.html', context)
-
 
 @csrf_exempt
 def payment_execute(request):
@@ -92,25 +91,28 @@ def payment_execute(request):
         payment_id = request.POST.get('razorpay_payment_id')
         order_id = request.POST.get('razorpay_order_id')
         signature = request.POST.get('razorpay_signature')
-        
-        # Verify the payment signature
+
         params_dict = {
             'razorpay_order_id': order_id,
             'razorpay_payment_id': payment_id,
             'razorpay_signature': signature
         }
+
         try:
             razorpay_client.utility.verify_payment_signature(params_dict)
         except SignatureVerificationError:
             messages.error(request, 'Payment verification failed. Please try again.')
             return redirect('payment')
 
-        # Fetch payment details from Razorpay
         try:
             payment = razorpay_client.payment.fetch(payment_id)
             if payment['status'] == 'captured':
-                # Payment successful
-                cart_instance = Cart(request)
+                try:
+                    cart_instance = Cart.objects.get(user=request.user)
+                except Cart.DoesNotExist:
+                    messages.error(request, "Cart not found.")
+                    return redirect('store')
+
                 cart_items = cart_instance.get_prods()
                 cart_quantities = cart_instance.get_quants()
                 order_total = cart_instance.order_total()
@@ -120,6 +122,7 @@ def payment_execute(request):
                 amount_paid = order_total
                 full_name = f"{user.first_name} {user.last_name}"
                 email = user.email
+
                 shipping_address = (
                     f"{shipping['phone']} \n"
                     f"{shipping['shipping_address1']} \n"
@@ -130,53 +133,53 @@ def payment_execute(request):
                     f"{shipping['country']}"
                 )
 
-                # Create the order
-                order = Order(
-                    user=user, 
-                    full_name=full_name, 
-                    email=email, 
-                    amount_paid=amount_paid, 
+                order = Order.objects.create(
+                    user=user,
+                    full_name=full_name,
+                    email=email,
+                    amount_paid=amount_paid,
                     shipping_address=shipping_address
                 )
-                order.save()
-                # Save Razorpay payment info
-                # Create payment record
+
                 Payment.objects.create(
                     user=user,
                     order=order,
                     razorpay_order_id=order_id,
                     razorpay_payment_id=payment_id,
-                    status=payment['status'],  # e.g., 'captured'
+                    status=payment['status'],
                     amount=amount_paid
                 )
 
-                # Create OrderItems
                 for item in cart_items:
-                    product = Product.objects.get(id=item.id)
-                    order_item = OrderItem(
+                    product = item.product
+                    quantity = cart_quantities.get(str(product.id), item.quantity)
+
+                    OrderItem.objects.create(
                         order=order,
                         product=product,
                         user=user,
-                        quantity=cart_quantities[str(item.id)],  
-                        price=item.sale_price if item.is_sale else item.price
+                        quantity=quantity,
+                        price=item.price
                     )
-                    order_item.save()
-                    
-                    # Update product stock
-                    product.stock_quantity -= cart_quantities[str(item.id)]
+
+                    product.stock_quantity -= quantity
                     product.save()
 
-                # Clear the cart
+                # ✅ COMPLETELY CLEAR CART
+                cart_instance.items.all().delete()
+                cart_instance.delete()
+
+                # Clear user session and profile data if needed
+                Profile.objects.filter(user=user).update(old_cart="")
+
                 for key in list(request.session.keys()):
                     if key == "session_key":
                         del request.session[key]
 
-                Profile.objects.filter(user__id=request.user.id).update(old_cart="")
-
-                messages.success(request, 'Payment successful!')
+                messages.success(request, 'Payment successful! Your cart has been cleared.')
                 return redirect('order_success')
             else:
-                messages.error(request, f'Payment failed. Reason: {payment["error_description"]}')
+                messages.error(request, 'Payment failed. Please try again.')
                 return redirect('payment')
         except Exception as e:
             messages.error(request, f'An error occurred: {str(e)}')
@@ -184,7 +187,7 @@ def payment_execute(request):
     else:
         messages.error(request, 'Invalid request method.')
         return redirect('payment')
-    
+
 def order_success(request):
     return render(request, 'payment/order_success.html')
 

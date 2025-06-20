@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import CategoryViewSet, ProductViewSet, ProductImageViewSet, ProfileViewSet, MobileBannerViewSet, ShippingAddressViewSet, create_order, user_order_history_api 
 from . import views
+from cart.api_views import CartView, AddToCartView, UpdateCartView, DeleteFromCartView, CartTotalView
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -19,6 +20,11 @@ urlpatterns = [
     path('create-order/', create_order, name='create_order'),
     path('orders/history/', user_order_history_api, name='user_order_history'),
     path('user/referrals/', views.referred_users_view, name='user-referrals'),
+    path('cart/', CartView.as_view(), name='api_cart'),
+    path('cart/add/', AddToCartView.as_view(), name='api_cart_add'),
+    path('cart/update/', UpdateCartView.as_view(), name='api_cart_update'),
+    path('cart/delete/', DeleteFromCartView.as_view(), name='api_cart_delete'),
+    path('cart/total/', CartTotalView.as_view(), name='api_cart_total'),
 	
 ]
 

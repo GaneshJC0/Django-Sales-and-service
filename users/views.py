@@ -10,7 +10,7 @@ from .forms import (
 )
 from .models import CustomUser, Profile, ShippingAddress
 import json
-from cart.cart import Cart
+from cart.models import Cart, CartItem
 from cart.models import Order
 from django.contrib.auth.decorators import login_required 
 # Register User with Referral System# Register User with Referral System
