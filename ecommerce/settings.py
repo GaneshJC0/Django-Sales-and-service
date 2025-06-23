@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'mlmtree',
     'django_extensions',
+    'wallet',
 ]
 
 MIDDLEWARE = [

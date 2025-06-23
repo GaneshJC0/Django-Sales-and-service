@@ -13,6 +13,8 @@ import json
 from cart.models import Cart, CartItem
 from cart.models import Order
 from django.contrib.auth.decorators import login_required 
+from wallet.models import Wallet
+
 # Register User with Referral System# Register User with Referral System
 def register_user(request):
     # Check if referral ID is in GET request and store it in session
@@ -143,6 +145,7 @@ def update_password(request):
 def user_profile(request):
     if request.user.is_authenticated:
         profile = Profile.objects.get(user=request.user)
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
         user_data = {
             'email': request.user.email,
             'first_name': request.user.first_name,
@@ -159,6 +162,7 @@ def user_profile(request):
         return render(request, 'users/user_profile.html', {
             'user_data': user_data,
             'orders': orders,
+            'wallet': wallet,
         })
 
     messages.error(request, "You must be logged in to view your profile.")

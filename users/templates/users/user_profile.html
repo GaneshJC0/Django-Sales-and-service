@@ -25,6 +25,7 @@
                         <h1 class="profile-name">{{ user_data.first_name }} {{ user_data.last_name }}</h1>
                         <p class="profile-id">ID: {{ user_data.unique_id }}</p>
                     </div>
+                    <h3>Wallet Balance: ₹{{ wallet.balance|default:"0.00" }}</h3>
                 </div>
             </section>
 
