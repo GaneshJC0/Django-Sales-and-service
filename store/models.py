@@ -36,6 +36,7 @@ class Product(models.Model):
     profile_image = models.ImageField(upload_to='uploads/products', null=True, blank=True, default='default/product.png')
     name = models.CharField(max_length=255, verbose_name='Product Name')
     price = models.DecimalField(max_digits=12, decimal_places=2)
+    special_commission_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0.00,help_text="Amount to be used for MLM commission distribution")
     description = models.TextField(verbose_name='Product Description', blank=True, null=True)
     is_sale = models.BooleanField(default=False)
     sale_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)

@@ -10,6 +10,7 @@ from store.models import Product
 from users.models import ShippingAddress, Profile
 from payment.models import Payment
 from .razorpay import razorpay_client
+from mlmtree.utils import distribute_commission 
 
 @csrf_exempt
 def payment(request):
@@ -161,6 +162,10 @@ def payment_execute(request):
                         quantity=quantity,
                         price=item.price
                     )
+
+                    for _ in range(quantity):
+                        distribute_commission(user, product)
+                    
 
                     product.stock_quantity -= quantity
                     product.save()
