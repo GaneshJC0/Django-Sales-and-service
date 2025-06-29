@@ -1,15 +1,12 @@
 from rest_framework import serializers
 from store.models import Product
 from .models import Cart, CartItem
+from api.serializers import ProductSerializer
 
 from django.contrib.auth import authenticate
 
 
-# Product details inside cart
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = ['id', 'name', 'price', 'sale_price', 'is_sale']
+
 
 # CartItem serializer with product and quantity
 class CartItemSerializer(serializers.ModelSerializer):

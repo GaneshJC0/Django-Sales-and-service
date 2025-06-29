@@ -35,16 +35,21 @@ def create_user_profile(sender, instance, created, **kwargs):
         instance.parent_sponsor = root_user
 
     # BFS traversal to assign parent_node with < 5 children
-    if not instance.parent_node:
-        root_user = CustomUser.objects.filter(is_superuser=True).first()
-        queue = deque([root_user])
+    # 🔁 Assign parent_node as parent_sponsor if sponsor has < 5 children
+    if not instance.parent_node and instance.parent_sponsor:
+        if instance.parent_sponsor.child_nodes.count() < 5:
+            instance.parent_node = instance.parent_sponsor
+        else:
+            # Optional fallback: find another spot via BFS if sponsor is full
+            root_user = CustomUser.objects.filter(is_superuser=True).first()
+            queue = deque([instance.parent_sponsor])
 
-        while queue:
-            current = queue.popleft()
-            if current.child_nodes.count() < 5:
-                instance.parent_node = current
-                break
-            queue.extend(current.child_nodes.all())
+            while queue:
+                current = queue.popleft()
+                if current.child_nodes.count() < 5:
+                    instance.parent_node = current
+                    break
+                queue.extend(current.child_nodes.all())
 
     instance.save()
 
