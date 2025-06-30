@@ -137,6 +137,16 @@
                     </svg>
                     Back to Order History
                 </a>
+
+                <!-- View Invoice Button Styled Like Back Button -->
+
+                <!-- View Invoice Button -->
+                <a href="{% url 'view_invoice' order.id %}" target="_blank" class="view-invoice-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14m7-7H5"/>
+                    </svg>
+                    View Invoice
+                </a>
             </section>
         </div>
     </div>

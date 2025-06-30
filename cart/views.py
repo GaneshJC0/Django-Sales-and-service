@@ -135,3 +135,25 @@ def order_history(request):
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'users/order_detail.html', {'order': order})
+
+
+from django.http import HttpResponse
+from .utils import generate_invoice
+
+def view_invoice(request, order_id):
+    order = Order.objects.get(id=order_id)
+    if request.user != order.user:
+        return HttpResponse("Unauthorized", status=401)
+
+    pdf_file = generate_invoice(order_id)
+    return HttpResponse(pdf_file, content_type='application/pdf')
+
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.admin.views.decorators import staff_member_required
+from .models import Order
+
+@staff_member_required
+def admin_order_invoice(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    return render(request, 'cart/order_invoice.html', {'order': order})

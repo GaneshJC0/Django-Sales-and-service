@@ -22,7 +22,6 @@
                 {% else %}
                 <th class="checkout"><a href="{% url 'signin' %}"><button type="button">Checkout</button></a></th>
                 {% endif %}
-                    
             </tr>
         </thead>
         {% endif %}
@@ -44,18 +43,18 @@
                 <div class="cart-item-image"><img src="{{ item.imageURL }}" alt="" width="100%"></div>
                 <div class="cart-item-name">{{ item.name }}</div>
                 <div class="cart-item-quantity"> 
-                    <button type="button" class="reduce-quantity" data-index="{{ item.id }}" style="padding: .3em .5em;">&minus;</button>
-                    <span class="item-quantity" data-index="{{ item.id }}">{{ item.quantity }}</span>
-                    <button type="button" class="add-quantity" data-index="{{ item.id }}" style="padding: .3em .5em;">&plus;</button>
+                    <button type="button" class="reduce-quantity" data-index="{{ item.product.id }}" style="padding: .3em .5em;">&minus;</button>
+                    <span class="item-quantity" data-index="{{ item.product.id }}">{{ item.quantity }}</span>
+                    <button type="button" class="add-quantity" data-index="{{ item.product.id }}" style="padding: .3em .5em;">&plus;</button>
                 </div>
-                {% if item.is_sale %}
-                <div class="cart-item-price">Rs. {{item.sale_price}}</div>
+                {% if item.product.is_sale %}
+                <div class="cart-item-price">Rs. {{item.product.sale_price}}</div>
                 {% else %}
-                <div class="cart-item-price">Rs. {{item.price}}</div> 
+                <div class="cart-item-price">Rs. {{item.product.price}}</div> 
                 {% endif %}
                 <div class="cart-item-total">Rs. {{item.total_price}}</div>
                 <div class="cart-item-remove">
-                    <button type="button" data-index="{{ item.id }}" class="remove-item" style="padding: .3em .5em; background-color: red; color: white;">Remove</button>
+                    <button type="button" data-index="{{ item.product.id }}" class="remove-item" style="padding: .3em .5em; background-color: red; color: white;">Remove</button>
                 </div>
             </div>
         {% endfor %}
@@ -73,21 +72,24 @@ $(document).on('click', '.add-quantity', function(e){
     e.preventDefault();
     var productId = $(this).data('index');
     var quantityElement = $('.item-quantity[data-index="' + productId + '"]');
-    var productQty = parseFloat(quantityElement.text()) + 1;
+    var productQty = parseInt(quantityElement.text()) + 1;
+
     $.ajax({
         type: 'POST',
-        url: '{% url "cart_update" %}',
-        data: {
+        url: '{% url "api_cart_update" %}',
+        data: JSON.stringify({
             product_id: productId,
-            product_qty: productQty,
-            csrfmiddlewaretoken: '{{ csrf_token }}',
-            action: 'post'
+            quantity: productQty
+        }),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
         },
-        success: function(json){
+        success: function(response){
             location.reload();
         },
-        error: function(xhr, errmsg, err){
-            console.error("Error updating cart:", errmsg);
+        error: function(xhr){
+            console.error("Error updating cart:", xhr.responseText);
         }
     });
 });
@@ -96,22 +98,25 @@ $(document).on('click', '.reduce-quantity', function(e){
     e.preventDefault();
     var productId = $(this).data('index');
     var quantityElement = $('.item-quantity[data-index="' + productId + '"]');
-    var productQty = parseFloat(quantityElement.text()) - 1;
+    var productQty = parseInt(quantityElement.text()) - 1;
     if (productQty < 1) return;
+
     $.ajax({
         type: 'POST',
-        url: '{% url "cart_update" %}',
-        data: {
+        url: '{% url "api_cart_update" %}',
+        data: JSON.stringify({
             product_id: productId,
-            product_qty: productQty,
-            csrfmiddlewaretoken: '{{ csrf_token }}',
-            action: 'post'
+            quantity: productQty
+        }),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
         },
-        success: function(json){
+        success: function(response){
             location.reload();
         },
-        error: function(xhr, errmsg, err){
-            console.error("Error reducing cart item:", errmsg);
+        error: function(xhr){
+            console.error("Error reducing cart item:", xhr.responseText);
         }
     });
 });
@@ -119,19 +124,22 @@ $(document).on('click', '.reduce-quantity', function(e){
 $(document).on('click', '.remove-item', function(e){
     e.preventDefault();
     var productId = $(this).data('index');
+
     $.ajax({
         type: 'POST',
-        url: '{% url "cart_delete" %}',
-        data: {
-            product_id: productId,
-            csrfmiddlewaretoken: '{{ csrf_token }}',
-            action: 'post'
+        url: '{% url "api_cart_delete" %}',
+        data: JSON.stringify({
+            product_id: productId
+        }),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
         },
-        success: function(json){
+        success: function(response){
             location.reload();
         },
-        error: function(xhr, errmsg, err){
-            console.error("Error removing cart item:", errmsg);
+        error: function(xhr){
+            console.error("Error removing cart item:", xhr.responseText);
         }
     });
 });

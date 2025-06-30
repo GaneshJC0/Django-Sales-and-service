@@ -2,13 +2,33 @@ from django.db import models
 
 from store.models import Product
 from users.models import CustomUser
+from store.models import Product
+from users.models import CustomUser
+from django.db import models
 
 class Order(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, null=True, blank=True)
     email = models.CharField(max_length=255, null=True, blank=True)
-    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
     shipping_address = models.TextField(max_length=15000)
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=50, default='COD')
+    payment_status = models.CharField(max_length=50, default='Pending')
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ('Pending', 'Pending'),
+            ('Processing', 'Processing'),
+            ('Shipped', 'Shipped'),
+            ('Delivered', 'Delivered'),
+            ('Cancelled', 'Cancelled'),
+            ('Refunded', 'Refunded'),
+        ],
+        default='Pending'
+    )
+    tracking_number = models.CharField(max_length=100, null=True, blank=True)
+    courier_service = models.CharField(max_length=100, null=True, blank=True)
     date_ordered = models.DateTimeField(auto_now_add=True)
     is_shipped = models.BooleanField(default=False)
     shipped_at = models.DateTimeField(null=True, blank=True)
@@ -27,7 +47,6 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"OrderItem {self.id} for Order {self.order.id}"
-    
 
 
 from django.db import models
