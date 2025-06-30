@@ -13,7 +13,7 @@ import json
 from cart.models import Cart, CartItem
 from cart.models import Order
 from django.contrib.auth.decorators import login_required 
-from wallet.models import Wallet
+from wallet.models import Wallet, WalletTransaction
 
 # Register User with Referral System# Register User with Referral System
 def register_user(request):
@@ -141,11 +141,20 @@ def update_password(request):
     messages.error(request, "You must be logged in to update your password.")
     return redirect('home')
 
-
+# User Profile View
+@login_required
 def user_profile(request):
     if request.user.is_authenticated:
+        # Get user profile
         profile = Profile.objects.get(user=request.user)
+        
+        # Get or create wallet
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        
+        # Fetch wallet transactions if wallet exists
+        transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-timestamp') if wallet else []
+        
+        # Build user data dictionary
         user_data = {
             'email': request.user.email,
             'first_name': request.user.first_name,
@@ -155,16 +164,19 @@ def user_profile(request):
             'parent_sponsor': request.user.parent_sponsor.unique_id if request.user.parent_sponsor else "None",
             'profile_image': profile.image.url if profile.image else '/media/default/pic.png',
         }
-
-        # ✅ Fetch order history
+        
+        # Fetch user's orders
         orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
-
+        
+        # Render the user profile page with all the data
         return render(request, 'users/user_profile.html', {
             'user_data': user_data,
             'orders': orders,
             'wallet': wallet,
+            'transactions': transactions,
         })
 
+    # Redirect unauthenticated users with an error message
     messages.error(request, "You must be logged in to view your profile.")
     return redirect('login')
 # Shipping Information View

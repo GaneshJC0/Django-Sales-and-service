@@ -36,8 +36,13 @@
         <br>
         <div class="shipping-information">
             <h4>Shipping Information</h4>
-            <form method="post" action="{% url 'process_payment' %}">
+           <form method="post" action="{% url 'process_payment' %}">
                 {% csrf_token %}
+
+                <!-- Add radio buttons for selecting payment method -->
+                <label><input type="radio" name="payment_method" value="razorpay" checked> Razorpay</label><br>
+                <label><input type="radio" name="payment_method" value="wallet"> Wallet</label><br><br>
+
                 <button type="submit" id="proceed-payment-btn">Proceed to Payment</button>
             </form>
         </div>

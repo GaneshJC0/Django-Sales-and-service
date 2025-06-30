@@ -1,0 +1,30 @@
+{% extends 'main/base.html' %}
+{% block content %}
+<h2>Wallet Transaction History</h2> 
+<table>
+    <thead>
+        <tr>
+            
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for txn in transactions %}
+        <tr>
+            
+            <td>{{ txn.transaction_type }}</td>
+            <td>₹{{ txn.amount }}</td>
+            <td>{{ txn.description }}</td>
+            <td>{{ txn.timestamp }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No transactions found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

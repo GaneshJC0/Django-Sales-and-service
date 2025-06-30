@@ -32,6 +32,17 @@
             <!-- Action Buttons Section -->
             <section class="profile-actions">
                 <div class="action-grid">
+                    <a href="{% url 'wallet_transactions' %}" class="action-card">
+                            <div class="action-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            <div class="action-content">
+                                <h3>Wallet Balance: ₹{{ wallet.balance|default:"0.00" }}</h3>
+                                <p>View transaction history</p>
+                            </div>
+                    </a>
                     <a href="{% url 'update_user' %}" class="action-card">
                         <div class="action-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
