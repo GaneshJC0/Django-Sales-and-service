@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import CategoryViewSet, ProductViewSet, ProductImageViewSet, ProfileViewSet, MobileBannerViewSet, ShippingAddressViewSet, create_order, user_order_history_api 
 from . import views
 from cart.api_views import CartView, AddToCartView, UpdateCartView, DeleteFromCartView, CartTotalView
+from wallet.api_views import get_wallet_balance,get_wallet_transactions
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -25,6 +26,8 @@ urlpatterns = [
     path('cart/update/', UpdateCartView.as_view(), name='api_cart_update'),
     path('cart/delete/', DeleteFromCartView.as_view(), name='api_cart_delete'),
     path('cart/total/', CartTotalView.as_view(), name='api_cart_total'),
+    path('wallet/balance/', get_wallet_balance, name='wallet-balance'),
+    path('wallet/transactions/', get_wallet_transactions, name='wallet-transactions'),
 	
 ]
 
