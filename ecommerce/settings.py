@@ -255,6 +255,7 @@ CORS_ALLOW_HEADERS = [
 
 
 CART_SESSION_ID = 'cart'
+LOGIN_URL = '/users/login/' 
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
