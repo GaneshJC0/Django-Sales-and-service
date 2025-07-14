@@ -1,0 +1,26 @@
+<!-- templates/users/billing_info.html -->
+{% extends 'main/base.html' %}
+{% block title %}Billing Information{% endblock title %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Billing Information</h2>
+
+    {% if banking_detail %}
+        <p><strong>Bank:</strong> {{ banking_detail.bank_name }} (****{{ banking_detail.account_last4 }})</p>
+        <p><strong>Status:</strong> {% if banking_detail.verified %} Verified {% else %} Not Verified {% endif %}</p>
+        <hr>
+        <p>Update below if you want to change:</p>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+
+    <div style="margin-top: 20px;">
+        <a href="{% url 'user_profile' %}">Back to Profile</a>
+    </div>
+</div>
+{% endblock content %}

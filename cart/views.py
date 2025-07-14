@@ -8,6 +8,8 @@ from users.forms import ShippingAddressForm
 from users.models import ShippingAddress
 
 
+
+
 @login_required
 def cart(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -52,6 +54,9 @@ from .models import Cart, CartItem
 from store.models import Product
 from django.contrib.auth.decorators import login_required
 
+
+
+
 @login_required
 def cart_update(request):
     if request.method == 'POST' and request.POST.get('action') == 'post':
@@ -89,19 +94,33 @@ def cart_delete(request):
         messages.info(request, f"{cart_item.product.name} removed from cart.")
         return JsonResponse({'product': cart_item_id})
 
-
-
 @login_required
 def checkout(request):
     cart = get_object_or_404(Cart, user=request.user)
     cart_items = cart.items.select_related('product').all()
     total_quantity = sum(item.quantity for item in cart_items)
-    order_total = sum((item.product.sale_price if item.product.is_sale else item.product.price) * item.quantity for item in cart_items)
+    order_total = sum(
+        (item.product.sale_price if item.product.is_sale else item.product.price) * item.quantity
+        for item in cart_items
+    )
 
     try:
         shipping_address = ShippingAddress.objects.get(user=request.user)
     except ShippingAddress.DoesNotExist:
-        shipping_address = None
+        # Pre-fill from Profile if no ShippingAddress exists yet AND SAVE it
+        profile = request.user.profile
+        shipping_address = ShippingAddress.objects.create(
+            user=request.user,
+            full_name=f"{request.user.first_name} {request.user.last_name}",
+            email=request.user.email,
+            phone=profile.phone,
+            address1=profile.address1,
+            address2=profile.address2,
+            city=profile.city,
+            state=profile.state,
+            zipcode=profile.zipcode,
+            country=profile.country
+        )
 
     if request.method == 'POST':
         form = ShippingAddressForm(request.POST, instance=shipping_address)
@@ -111,7 +130,7 @@ def checkout(request):
             address.save()
             request.session['shipping'] = request.POST
             messages.success(request, "Your shipping information has been updated.")
-            return redirect('payment')  # or to a review page
+            return redirect('payment')  # or wherever you want
         else:
             messages.error(request, "Please correct the errors below.")
     else:

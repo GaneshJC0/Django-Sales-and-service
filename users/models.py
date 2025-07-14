@@ -101,3 +101,21 @@ class ShippingAddress(models.Model):
 
     def __str__(self):
         return f'Shipping Address - {str(self.id)}'
+
+# users/models.py
+
+from django.conf import settings
+from django.db import models
+
+class BankingDetail(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    razorpay_contact_id = models.CharField(max_length=100)
+    razorpay_fund_account_id = models.CharField(max_length=100)
+    bank_name = models.CharField(max_length=255)
+    account_last4 = models.CharField(max_length=10, default='0000')
+
+    verified = models.BooleanField(default=False)
+    date_added = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.bank_name} (****{self.account_last4})"

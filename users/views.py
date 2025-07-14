@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.forms import AuthenticationForm
+
+from payment import razorpay
 from .forms import (
     CustomUserRegistrationForm, UpdateUserForm, UpdateUserPassword, 
     UpdateInfoForm, ShippingAddressForm
@@ -51,6 +53,7 @@ def register_user(request):
             messages.success(request, 'Registration successful. Please fill in your shipping info.')
             return redirect('update_info')
         else:
+            print(form.errors)  # 👈 Add this
             messages.error(request, 'Unsuccessful registration. Invalid information.')
     else:
         form = CustomUserRegistrationForm()
@@ -179,21 +182,6 @@ def user_profile(request):
     # Redirect unauthenticated users with an error message
     messages.error(request, "You must be logged in to view your profile.")
     return redirect('login')
-# Shipping Information View
-def shipping_info(request):
-    if request.user.is_authenticated:
-        shipping_address, created = ShippingAddress.objects.get_or_create(user=request.user)
-        if request.method == 'POST':
-            form = ShippingAddressForm(request.POST, instance=shipping_address)
-            if form.is_valid():
-                form.save()
-                messages.success(request, "Your shipping information has been updated.")
-                return redirect('home')
-        else:
-            form = ShippingAddressForm(instance=shipping_address)
-        return render(request, 'users/shipping_information.html', {'form': form})
-    messages.error(request, "You must be logged in to update your info.")
-    return redirect('login')
 
 @login_required
 def my_referrals_view(request):
@@ -201,31 +189,91 @@ def my_referrals_view(request):
     return render(request, 'users/my_referrals.html', {'referred_users': referred_users})
 
 
+# users/views.py
+
+from .models import BankingDetail
+from .forms import BankingDetailForm
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 
 
-'''
-# Password Reset Views
-class CustomPasswordResetView(PasswordResetView):
-    template_name = 'users/password_reset_form.html'
-    email_template_name = 'users/password_reset_email.html'
-    subject_template_name = 'users/password_reset_subject.txt'
-    success_url = reverse_lazy('password_reset_done')
-    
-    def form_valid(self, form):
-        email = form.cleaned_data['email']
-        if not CustomUser.objects.filter(email=email).exists():
-            messages.error(self.request, "This email address is not registered.")
-            return self.form_invalid(form)
-        return super().form_valid(form)
+from .models import BankingDetail
+from .forms import BankingDetailForm
+from razorpay.errors import BadRequestError
 
-class PasswordResetDoneView(PasswordResetDoneView):
-    template_name = 'users/password_reset_done.html'
+@login_required
+def billing_info(request):
+    user = request.user
 
-class PasswordResetConfirmView(PasswordResetConfirmView):
-    template_name = 'users/password_reset_confirm.html'
-    success_url = reverse_lazy('password_reset_complete')
+    # Check if banking detail already exists
+    try:
+        banking_detail = BankingDetail.objects.get(user=user)
+        has_detail = True
+    except BankingDetail.DoesNotExist:
+        banking_detail = None
+        has_detail = False
 
-class PasswordResetCompleteView(PasswordResetCompleteView):
-    template_name = 'users/password_reset_complete.html'
-'''
+    if request.method == 'POST':
+        form = BankingDetailForm(request.POST)
+        if form.is_valid():
+            account_holder_name = form.cleaned_data['account_holder_name']
+            bank_name = form.cleaned_data['bank_name']
+            account_number = form.cleaned_data['account_number']
+            ifsc_code = form.cleaned_data['ifsc_code']
+
+            
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+            try:
+                # Try to create a customer
+                customer = client.customer.create({
+                    "name": account_holder_name,
+                    "email": user.email,
+                    "contact": "9999999999",
+                    "fail_existing": 0
+                })
+
+                customer_id = customer["id"]
+
+                last4 = account_number[-4:] if len(account_number) >= 4 else account_number
+
+                if has_detail:
+                    banking_detail.razorpay_contact_id = customer_id
+                    banking_detail.bank_name = bank_name
+                    banking_detail.account_last4 = last4
+                    banking_detail.verified = True
+                    banking_detail.save()
+                else:
+                    BankingDetail.objects.create(
+                        user=user,
+                        razorpay_contact_id=customer_id,
+                        razorpay_fund_account_id="N/A",  # Placeholder since fund_account is not used here
+                        bank_name=bank_name,
+                        account_last4=last4,
+                        verified=True,
+                    )
+
+                messages.success(request, "Billing information saved successfully.")
+                return redirect('billing_info')
+
+            except BadRequestError as e:
+                messages.error(request, f"Razorpay Error: {str(e)}")
+                return redirect('billing_info')
+
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        initial_data = {
+            'account_holder_name': '',
+            'bank_name': banking_detail.bank_name if banking_detail else '',
+        }
+        form = BankingDetailForm(initial=initial_data)
+
+    context = {
+        'form': form,
+        'banking_detail': banking_detail,
+    }
+    return render(request, 'users/billing_info.html', context)
 
