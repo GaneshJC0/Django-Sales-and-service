@@ -46,35 +46,6 @@ def verify_pan(pan_number):
         return {"status": "failed", "message": str(e)}
 
 
-
-import requests
-from django.conf import settings
-
-def verify_pan(pan_number):
-    url = "https://api.stage.setu.co/api/v2/pan/verify"
-    # url = "https://dg-sandbox.setu.co/pan/v2/verify"
-    headers = {
-        "x-client-id": settings.SETU_CLIENT_ID,
-        "x-client-secret": settings.SETU_CLIENT_SECRET,
-        "x-product-instance-id": settings.SETU_PRODUCT_INSTANCE_ID,
-        "Content-Type": "application/json"
-    }
-    data = {
-        "idType": "PAN",
-        "idNumber": pan_number
-    }
-    print("Sending PAN payload:", data)
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        print("PAN API Raw Response:", response.text)
-        return response.json()
-        
-    except requests.exceptions.RequestException as e:
-        print(f"PAN verification error: {e}")
-
-        return {"status": "failed", "message": str(e)}
-
-
 # Register User with Referral System# Register User with Referral System
 def register_user(request):
     # Check if referral ID is in GET request and store it in session
@@ -369,7 +340,8 @@ def add_bank_details(request):
 
     return render(request, 'users/bank_details.html', {
         'form': form,
-        'banking_detail': banking_detail,
-    }
-    return render(request, 'users/billing_info.html', context)
+        'already_submitted': False,
+        'banking_details': banking
+    })
+
 
