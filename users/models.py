@@ -14,7 +14,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(auto_now=True)
     unique_id = models.CharField(max_length=50, unique=True, blank=True, null=True)
     referral_code = models.CharField(max_length=100, blank=True, null=True)
-
+    pan_number = models.CharField(max_length=10,  null=True, blank=True)
     parent_sponsor = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='sponsored_users'
     )
@@ -104,18 +104,21 @@ class ShippingAddress(models.Model):
 
 # users/models.py
 
-from django.conf import settings
-from django.db import models
+from django.conf import settings  # Already imported
+# REMOVE this line:
+# from django.contrib.auth.models import User
 
-class BankingDetail(models.Model):
+class BankingDetails(models.Model):
+    # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    razorpay_contact_id = models.CharField(max_length=100)
-    razorpay_fund_account_id = models.CharField(max_length=100)
-    bank_name = models.CharField(max_length=255)
-    account_last4 = models.CharField(max_length=10, default='0000')
 
-    verified = models.BooleanField(default=False)
-    date_added = models.DateTimeField(auto_now=True)
+    account_holder_name = models.CharField(max_length=100)
+    account_number = models.CharField(max_length=50)
+    ifsc_code = models.CharField(max_length=20)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=15)
+    contact_type = models.CharField(max_length=20)
+    razorpay_contact_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_fund_account_id = models.CharField(max_length=100, blank=True, null=True)
 
-    def __str__(self):
-        return f"{self.user.email} - {self.bank_name} (****{self.account_last4})"
+

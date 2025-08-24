@@ -8,7 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from payment import razorpay
 from .forms import (
     CustomUserRegistrationForm, UpdateUserForm, UpdateUserPassword, 
-    UpdateInfoForm, ShippingAddressForm
+     ShippingAddressForm
 )
 from .models import CustomUser, Profile, ShippingAddress
 import json
@@ -16,6 +16,35 @@ from cart.models import Cart, CartItem
 from cart.models import Order
 from django.contrib.auth.decorators import login_required 
 from wallet.models import Wallet, WalletTransaction
+
+
+import requests
+from django.conf import settings
+
+def verify_pan(pan_number):
+    url = "https://api.stage.setu.co/api/v2/pan/verify"
+    # url = "https://dg-sandbox.setu.co/pan/v2/verify"
+    headers = {
+        "x-client-id": settings.SETU_CLIENT_ID,
+        "x-client-secret": settings.SETU_CLIENT_SECRET,
+        "x-product-instance-id": settings.SETU_PRODUCT_INSTANCE_ID,
+        "Content-Type": "application/json"
+    }
+    data = {
+        "idType": "PAN",
+        "idNumber": pan_number
+    }
+    print("Sending PAN payload:", data)
+    try:
+        response = requests.post(url, json=data, headers=headers)
+        print("PAN API Raw Response:", response.text)
+        return response.json()
+        
+    except requests.exceptions.RequestException as e:
+        print(f"PAN verification error: {e}")
+
+        return {"status": "failed", "message": str(e)}
+
 
 # Register User with Referral System# Register User with Referral System
 def register_user(request):
@@ -41,6 +70,15 @@ def register_user(request):
     if request.method == 'POST':
         form = CustomUserRegistrationForm(request.POST)
         if form.is_valid():
+            
+            pan = form.cleaned_data.get('pan_number')
+            pan_response = verify_pan(pan)
+            print(f"PAN API Response: {pan_response}")  # Optional for debugging
+
+            if pan_response.get("status") != "success" or pan_response.get("data", {}).get("status") != "verified":
+                messages.error(request, "PAN verification failed. Please enter a valid PAN.")
+                return render(request, 'users/register.html', {'form': form})
+
             user = form.save(commit=False)
             user.parent_sponsor = parent_sponsor  # Assign sponsor
             user.save()
@@ -59,6 +97,8 @@ def register_user(request):
         form = CustomUserRegistrationForm()
     
     return render(request, 'users/register.html', {'form': form})
+
+
 
 
 # Login User
@@ -119,7 +159,7 @@ def update_user(request):
 def update_info(request):
     if request.user.is_authenticated:
         profile = Profile.objects.get(user=request.user)
-        form = UpdateInfoForm(request.POST or None, instance=profile)
+        form = ShippingAddressForm(request.POST or None, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile info has been updated.")
@@ -176,6 +216,7 @@ def user_profile(request):
             'user_data': user_data,
             'orders': orders,
             'wallet': wallet,
+            'wallet_balance': wallet.balance,
             'transactions': transactions,
         })
 
@@ -190,90 +231,118 @@ def my_referrals_view(request):
 
 
 # users/views.py
+from .models import BankingDetails
 
-from .models import BankingDetail
-from .forms import BankingDetailForm
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 
-from .models import BankingDetail
-from .forms import BankingDetailForm
+
+from .forms import BankingDetailsForm
 from razorpay.errors import BadRequestError
 
-@login_required
-def billing_info(request):
-    user = request.user
 
-    # Check if banking detail already exists
+from django.conf import settings
+from django.contrib import messages
+
+
+
+# import razorpay
+# import logging
+
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .forms import BankingDetailsForm
+from .models import BankingDetails
+from .utils.razorpay_x import create_contact, create_fund_account, initiate_payout
+
+from django.shortcuts import get_object_or_404
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+
+from .forms import BankingDetailsForm
+from .models import BankingDetails
+from users.utils.razorpay_x import create_contact, create_fund_account
+
+
+from django.contrib import messages  # ✅ for success messages
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import BankingDetails
+from .forms import BankingDetailsForm
+from .utils.razorpay_x import create_contact, create_fund_account  # if these are in a helper file
+
+@login_required
+def add_bank_details(request):
     try:
-        banking_detail = BankingDetail.objects.get(user=user)
-        has_detail = True
-    except BankingDetail.DoesNotExist:
-        banking_detail = None
-        has_detail = False
+        banking = BankingDetails.objects.get(user=request.user)
+        already_submitted = True
+    except BankingDetails.DoesNotExist:
+        banking = None
+        already_submitted = False
+
+    # ⛔ Do not allow re-submission if already exists
+    if already_submitted:
+        return render(request, 'users/bank_details.html', {
+            'banking_details': banking,
+            'already_submitted': True
+        })
 
     if request.method == 'POST':
-        form = BankingDetailForm(request.POST)
+        form = BankingDetailsForm(request.POST)
         if form.is_valid():
-            account_holder_name = form.cleaned_data['account_holder_name']
-            bank_name = form.cleaned_data['bank_name']
-            account_number = form.cleaned_data['account_number']
-            ifsc_code = form.cleaned_data['ifsc_code']
+            banking = form.save(commit=False)
+            banking.user = request.user
 
-            
-            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            # 👉 Create Razorpay Contact
+            contact = create_contact(
+                name=banking.account_holder_name,
+                email=banking.email,
+                phone=banking.phone_number,
+                contact_type=banking.contact_type
+            )
+            if not contact or 'id' not in contact:
+                messages.error(request, "❌ Failed to create contact in Razorpay.")
+                return redirect('bank_details')  # replace with your correct URL name
 
-            try:
-                # Try to create a customer
-                customer = client.customer.create({
-                    "name": account_holder_name,
-                    "email": user.email,
-                    "contact": "9999999999",
-                    "fail_existing": 0
-                })
+            banking.razorpay_contact_id = contact['id']
 
-                customer_id = customer["id"]
+            # 👉 Create Fund Account
+            fund = create_fund_account(
+                contact_id=banking.razorpay_contact_id,
+                name=banking.account_holder_name,
+                account_number=banking.account_number,
+                ifsc=banking.ifsc_code
+            )
+            if not fund or 'id' not in fund:
+                messages.error(request, "❌ Failed to create fund account.")
+                return redirect('bank_details')
 
-                last4 = account_number[-4:] if len(account_number) >= 4 else account_number
+            banking.razorpay_fund_account_id = fund['id']
+            banking.save()
 
-                if has_detail:
-                    banking_detail.razorpay_contact_id = customer_id
-                    banking_detail.bank_name = bank_name
-                    banking_detail.account_last4 = last4
-                    banking_detail.verified = True
-                    banking_detail.save()
-                else:
-                    BankingDetail.objects.create(
-                        user=user,
-                        razorpay_contact_id=customer_id,
-                        razorpay_fund_account_id="N/A",  # Placeholder since fund_account is not used here
-                        bank_name=bank_name,
-                        account_last4=last4,
-                        verified=True,
-                    )
-
-                messages.success(request, "Billing information saved successfully.")
-                return redirect('billing_info')
-
-            except BadRequestError as e:
-                messages.error(request, f"Razorpay Error: {str(e)}")
-                return redirect('billing_info')
+            messages.success(request, "✅ Bank details submitted successfully.")
+            return redirect('bank_details')
 
         else:
-            messages.error(request, "Please correct the errors below.")
+            messages.error(request, "❌ Please correct the errors below.")
     else:
-        initial_data = {
-            'account_holder_name': '',
-            'bank_name': banking_detail.bank_name if banking_detail else '',
-        }
-        form = BankingDetailForm(initial=initial_data)
+        form = BankingDetailsForm()
 
-    context = {
+    return render(request, 'users/bank_details.html', {
         'form': form,
-        'banking_detail': banking_detail,
-    }
-    return render(request, 'users/billing_info.html', context)
+        'already_submitted': False,
+        'banking_details': banking
+    })
 
+
+# https://claude.ai/share/30ba163f-85af-475c-a220-a9eaaaaabe24

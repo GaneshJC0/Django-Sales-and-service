@@ -1,3 +1,5 @@
+#wallet/models.py
+
 from django.conf import settings
 from django.db import models
 from cart.models import Order
@@ -25,3 +27,13 @@ class WalletTransaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type} - {self.amount} for {self.wallet.user.email}"
+    
+
+class Payout(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    amount = models.FloatField()
+    status = models.CharField(max_length=50)
+    transaction_id = models.CharField(max_length=100, null=True, blank=True)  # <- Make it nullable
+    
+    razorpay_payout_id = models.CharField(max_length=100,null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

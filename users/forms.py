@@ -2,6 +2,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django import forms
 from .models import CustomUser, Profile, ShippingAddress
 
+from .models import BankingDetails
 
 class CustomUserCreationForm(UserCreationForm):
     """Form for Django admin user creation"""
@@ -26,11 +27,16 @@ class CustomUserRegistrationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'placeholder': 'First Name'}))
     last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'placeholder': 'Last Name'}))
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'placeholder': 'Email'}))
-    
+    pan_number = forms.CharField(
+    max_length=10,
+    required=True,
+    widget=forms.TextInput(attrs={'placeholder': 'PAN Number'})
+)
+
 
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'email',  'password1', 'password2')
+        fields = ('first_name', 'last_name', 'email', 'pan_number', 'password1', 'password2')
 
     def clean_email(self):
         """Ensure the email is unique"""
@@ -110,44 +116,19 @@ class ShippingAddressForm(forms.ModelForm):
         fields = ["full_name", "email", "phone", "address1", "address2", "city", "state", "zipcode", "country"]
 
 
-from .models import BankingDetail
+
 
 # users/forms.py
 
 from django import forms
+
+
+# forms.py
 from django import forms
-from .models import BankingDetail
-from django import forms
-
-class BankingDetailForm(forms.Form):
-    account_holder_name = forms.CharField(
-        max_length=255,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Account Holder Name'})
-    )
-    bank_name = forms.CharField(
-        max_length=255,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Bank Name'})
-    )
-    account_number = forms.CharField(
-        max_length=50,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Account Number'})
-    )
-    ifsc_code = forms.CharField(
-        max_length=20,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'IFSC Code'})
-    )
-
-    def clean_account_number(self):
-        account_number = self.cleaned_data.get('account_number')
-        if not account_number.isdigit():
-            raise forms.ValidationError("Account number should contain only digits.")
-        if len(account_number) < 9 or len(account_number) > 18:
-            raise forms.ValidationError("Account number must be between 9 and 18 digits long.")
-        return account_number
+from .models import BankingDetails
 
 
-    def clean_ifsc_code(self):
-        ifsc = self.cleaned_data.get('ifsc_code')
-        if len(ifsc) != 11:
-            raise forms.ValidationError("IFSC code must be 11 characters long.")
-        return ifsc.upper()
+class BankingDetailsForm(forms.ModelForm):
+    class Meta:
+        model = BankingDetails
+        fields = ['account_holder_name', 'account_number', 'ifsc_code', 'email', 'phone_number', 'contact_type']

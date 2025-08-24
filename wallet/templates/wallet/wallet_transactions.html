@@ -1,10 +1,23 @@
+<!-- wallet/templates/wallet/wallet_transactions.html -->
 {% extends 'main/base.html' %}
+
 {% block content %}
-<h2>Wallet Transaction History</h2> 
+<h1 style="color: green;">Current Wallet Balance: ₹{{ wallet.balance|floatformat:2 }}</h1>
+
+<h2>Wallet Transaction History</h2>
+
+<!-- ✅ Messages Section -->
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
 <table>
     <thead>
         <tr>
-            
             <th>Type</th>
             <th>Amount</th>
             <th>Description</th>
@@ -14,7 +27,6 @@
     <tbody>
         {% for txn in transactions %}
         <tr>
-            
             <td>{{ txn.transaction_type }}</td>
             <td>₹{{ txn.amount }}</td>
             <td>{{ txn.description }}</td>
@@ -27,4 +39,70 @@
         {% endfor %}
     </tbody>
 </table>
+
+<hr>
+
+<!-- ✅ Withdrawal Form Section -->
+<h2>Withdraw Funds</h2>
+
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="request_id" value="{{ request_id }}">
+  <input type="number" name="amount" step="0.01" placeholder="Enter amount" required>
+  <button type="submit">Withdraw</button>
+</form>
+
+<!-- ✅ Payout List -->
+{% comment %} {% if payouts %}
+  <h3>Your Withdrawals</h3>
+  <table>
+    <tr>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Date</th>
+    </tr>
+    {% for payout in payouts %}
+    <tr>
+      <td>₹{{ payout.amount }}</td>
+      <td>{{ payout.status }}</td>
+      <td>{{ payout.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p>No withdrawals yet.</p>
+{% endif %} {% endcomment %}
+
+<div style="margin-top: 20px;">
+        <a href="{% url 'user_profile' %}">← Back to Profile</a>
+    </div>
+
+<!-- ✅ Optional: Add styling for messages -->
+<style>
+  .messages {
+      list-style-type: none;
+      padding: 10px;
+      margin: 15px 0;
+  }
+
+  .messages li {
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+  }
+
+  .messages .success {
+      background-color: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+  }
+
+  .messages .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+  }
+</style>
+
 {% endblock %}

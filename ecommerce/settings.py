@@ -33,6 +33,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
+RAZORPAYX_KEY_ID = os.environ.get("RAZORPAYX_KEY_ID", "")
+RAZORPAYX_KEY_SECRET = os.environ.get("RAZORPAYX_KEY_SECRET", "")
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
@@ -67,6 +70,7 @@ INSTALLED_APPS = [
     'mlmtree',
     'django_extensions',
     'wallet',
+    
 ]
 
 MIDDLEWARE = [
@@ -182,6 +186,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = "users.CustomUser"
 
+
+# Razorpay X
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+
+
+
+
+# Pan Verification
+import os
+SETU_CLIENT_ID = os.getenv("SETU_CLIENT_ID")
+SETU_CLIENT_SECRET = os.getenv("SETU_CLIENT_SECRET")
+SETU_PRODUCT_INSTANCE_ID =os.getenv("SETU_PRODUCT_INSTANCE_ID")
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

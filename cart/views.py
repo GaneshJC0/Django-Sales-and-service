@@ -145,6 +145,55 @@ def checkout(request):
     }
     return render(request, 'cart/checkout.html', context)
 
+
+
+
+# from users.forms import ShippingAddressForm
+
+# @login_required
+# def checkout(request):
+#     cart = get_object_or_404(Cart, user=request.user)
+#     cart_items = cart.items.select_related('product').all()
+#     total_quantity = sum(item.quantity for item in cart_items)
+#     order_total = sum(
+#         (item.product.sale_price if item.product.is_sale else item.product.price) * item.quantity
+#         for item in cart_items
+#     )
+
+#     # Try to get existing shipping address
+#     try:
+#         shipping_address = ShippingAddress.objects.get(user=request.user)
+#     except ShippingAddress.DoesNotExist:
+#         profile = request.user.profile
+#         shipping_address = ShippingAddress(
+#             user=request.user,
+#             full_name=f"{request.user.first_name} {request.user.last_name}",
+#             email=request.user.email,
+#             phone=profile.phone,
+#             address1=profile.address1,
+#             address2=profile.address2,
+#             city=profile.city,
+#             state=profile.state,
+#             zipcode=profile.zipcode,
+#             country=profile.country
+#         )
+
+#     # Bind the form to POST data if submitted, otherwise prefill with instance
+#     form = ShippingAddressForm(request.POST or None, instance=shipping_address)
+
+#     if request.method == "POST":
+#         if form.is_valid():
+#             form.save()
+#             # Continue checkout process (payment, order creation, etc.)
+#             return redirect('payment')  # or whatever comes next
+
+#     return render(request, 'cart/checkout.html', {
+#         'cart_items': cart_items,
+#         'total_quantity': total_quantity,
+#         'order_total': order_total,
+#         'form': form
+#     })
+
 @login_required
 def order_history(request):
     orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
