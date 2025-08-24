@@ -1,4 +1,4 @@
-{% extends 'main/base.html' %}
+{% comment %} {% extends 'main/base.html' %}
 {% load static %}
 
 {% block title %}
@@ -22,6 +22,9 @@
             
         </div>
     </form>
+    <div style="margin-top: 20px;">
+        <a href="{% url 'user_profile' %}">← Back to Profile</a>
+    </div>
 </div>
 {% endblock content %}
-    
+     {% endcomment %}

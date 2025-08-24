@@ -1,0 +1,42 @@
+<!-- templates/users/bank_details.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Bank Details</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if already_submitted %}
+        <p><strong>Bank details already submitted.</strong></p>
+        <ul class="list-group">
+            <li class="list-group-item"><strong>Name:</strong> {{ banking_details.account_holder_name }}</li>
+            <li class="list-group-item"><strong>Account Number:</strong> {{ banking_details.account_number }}</li>
+            <li class="list-group-item"><strong>IFSC Code:</strong> {{ banking_details.ifsc_code }}</li>
+            <li class="list-group-item"><strong>Email:</strong> {{ banking_details.email }}</li>
+            <li class="list-group-item"><strong>Phone:</strong> {{ banking_details.phone_number }}</li>
+            <li class="list-group-item"><strong>Type:</strong> {{ banking_details.contact_type }}</li>
+        </ul>
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    {% endif %}
+</div>
+
+
+
+
+
+    <div style="margin-top: 20px;">
+        <a href="{% url 'user_profile' %}">← Back to Profile</a>
+    </div>
+</div>
+{% endblock content %}

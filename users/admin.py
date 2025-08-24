@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-from .models import CustomUser, Profile, ShippingAddress ,BankingDetail
+from .models import CustomUser, Profile, ShippingAddress ,BankingDetails 
 
 
 class CustomUserAdmin(UserAdmin):
@@ -80,16 +80,19 @@ class ShippingAddressAdmin(admin.ModelAdmin):
 
 admin.site.register(ShippingAddress, ShippingAddressAdmin)
 
-
-@admin.register(BankingDetail)
+@admin.register(BankingDetails)
 class BankingDetailAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         'user', 
+        'account_holder_name', 
+        'account_number', 
+        'ifsc_code', 
+        'email', 
+        'phone_number', 
+        'contact_type', 
         'razorpay_contact_id', 
-        'razorpay_fund_account_id', 
-        'bank_name', 
-        'account_last4', 
-        'verified', 
-        'date_added'
-    )
-    search_fields = ('user__email', 'razorpay_contact_id', 'razorpay_fund_account_id', 'bank_name')
+        'razorpay_fund_account_id',
+    ]
+    search_fields = ['user__username', 'account_holder_name', 'email', 'phone_number']
+    list_filter = ['contact_type']
+

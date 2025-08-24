@@ -2,6 +2,10 @@ from rest_framework import serializers
 from .models import CustomUser, Profile
 from django.contrib.auth.password_validation import validate_password
 
+# users/serializers.py
+
+from .models import BankingDetails
+
 class CustomUserSerializer(serializers.ModelSerializer):
     """Serializer for retrieving user details"""
     class Meta:
@@ -57,4 +61,27 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['user', 'image', 'phone', 'address1', 'address2', 'city', 'state', 'zipcode', 'country', 'old_cart', 'unique_id']
-        
+
+
+
+
+
+# users/serializers.py
+from rest_framework import serializers
+from .models import BankingDetails
+
+class BankingDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankingDetails
+        fields = [
+            'id',
+            'account_holder_name',
+            'email',
+            'phone_number',
+            'contact_type',
+            'account_number',
+            'ifsc_code',
+            'razorpay_contact_id',
+            'razorpay_fund_account_id',
+        ]
+        read_only_fields = ['razorpay_contact_id', 'razorpay_fund_account_id']
