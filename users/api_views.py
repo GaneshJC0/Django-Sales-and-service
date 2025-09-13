@@ -47,3 +47,12 @@ def add_bank_details_api(request):
         return Response(BankingDetailsSerializer(banking).data, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_bank_details_api(request):
+    try:
+        bank_details = BankingDetails.objects.get(user=request.user)
+        serializer = BankingDetailsSerializer(bank_details)
+        return Response(serializer.data, status=200)
+    except BankingDetails.DoesNotExist:
+        return Response({"error": "Bank details not found"}, status=404)

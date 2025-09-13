@@ -5,7 +5,7 @@ from . import views
 from cart.api_views import CartView, AddToCartView, UpdateCartView, DeleteFromCartView, CartTotalView
 from wallet.api_views import get_wallet_balance,get_wallet_transactions ,withdraw_from_wallet
 from payment.api_views import PaymentViewSet
-from users.api_views import add_bank_details_api
+from users.api_views import add_bank_details_api, get_bank_details_api
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
@@ -34,7 +34,8 @@ urlpatterns = [
     path('wallet/transactions/', get_wallet_transactions, name='wallet-transactions'),
 	path('wallet/withdraw/', withdraw_from_wallet, name='wallet-withdraw'),
     # bank_details
-    path('users/bank-details/', add_bank_details_api, name='add_bank_details_api'), 
+    path('users/bank-details/', add_bank_details_api, name='add_bank_details_api'),
+    path('users/get-bank-details/', get_bank_details_api, name='get-bank-details')
 
 ]
 
