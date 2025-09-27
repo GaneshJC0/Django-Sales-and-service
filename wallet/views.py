@@ -11,6 +11,9 @@ from users.models import BankingDetails
 from users.utils.razorpay_x import initiate_payout
 
 
+# dyanamic fee+tax 
+
+
 @login_required
 def wallet_transactions_view(request):
     user = request.user
@@ -32,57 +35,71 @@ def wallet_transactions_view(request):
         except (TypeError, ValueError):
             return JsonResponse({"error": "Invalid amount"}, status=400)
 
-        # ✅ Prevent duplicate submission: Check if a request_id already exists
-        request_id = request.POST.get('request_id')
+        request_id = request.POST.get('request_id') or str(uuid.uuid4())
+
+        # ✅ Prevent duplicate withdrawal requests
         if Payout.objects.filter(transaction_id=request_id).exists():
             messages.warning(request, "This withdrawal request was already processed.")
             return redirect('wallet_transactions')
 
-        # ✅ Atomic DB transaction to avoid race conditions
+        # ✅ Atomic DB transaction
         with transaction.atomic():
             wallet = Wallet.objects.select_for_update().get(user=user)
 
             if wallet.balance < amount:
                 return JsonResponse({"error": "Insufficient wallet balance."}, status=400)
 
-            # ✅ Get user's banking details
+            # ✅ Get banking details
             try:
                 banking = BankingDetails.objects.get(user=user)
             except BankingDetails.DoesNotExist:
                 return JsonResponse({"error": "Banking details not found."}, status=404)
 
-            # ✅ Initiate payout
+            # ✅ Initiate payout (for requested amount)
             payout_response = initiate_payout(banking.razorpay_fund_account_id, float(amount))
-
             if not payout_response or 'id' not in payout_response:
                 return JsonResponse({
                     "error": f"Failed to initiate payout. Response: {payout_response}"
                 }, status=400)
 
-            # ✅ Deduct from wallet
-            wallet.balance -= amount
+            # ✅ Extract fees + tax from Razorpay response (in paise)
+            fees_paise = payout_response.get("fees", 0)
+            tax_paise = payout_response.get("tax", 0)
+
+            fee = Decimal(fees_paise) / 100
+            tax = Decimal(tax_paise) / 100
+            total_deduction = amount + fee + tax
+
+            # ✅ Ensure wallet has enough for fees too
+            if wallet.balance < total_deduction:
+                return JsonResponse({"error": "Insufficient wallet balance for fees."}, status=400)
+
+            # ✅ Deduct total amount from wallet
+            wallet.balance -= total_deduction
             wallet.save()
 
             # ✅ Record wallet transaction
             WalletTransaction.objects.create(
                 wallet=wallet,
                 transaction_type='debit',
-                amount=amount,
-                description=f'Payout initiated: ₹{amount}'
+                amount=total_deduction,
+                description=f'Payout ₹{amount} + Fees ₹{fee} + Tax ₹{tax}'
             )
 
-            # ✅ Save payout with unique request_id
+            # ✅ Save payout record
             Payout.objects.create(
                 user=user,
                 amount=amount,
                 razorpay_payout_id=payout_response['id'],
                 status=payout_response.get('status', 'initiated'),
-                transaction_id=request_id or str(uuid.uuid4())  # unique ID
+                transaction_id=request_id
             )
 
-        messages.success(request, f'Withdrawal of ₹{amount} initiated successfully.')
+        messages.success(request, f'Withdrawal of ₹{amount} initiated successfully. '
+                                  f'Fees ₹{fee} + Tax ₹{tax} applied. '
+                                  f'Total deducted: ₹{total_deduction}.')
 
-        # ✅ Redirect to prevent double submission on refresh
+        # ✅ Redirect to prevent duplicate form submission
         return redirect('wallet_transactions')
 
     # GET request
@@ -95,24 +112,12 @@ def wallet_transactions_view(request):
 
 
 
-
-# from django.shortcuts import render
-# from django.contrib.auth.decorators import login_required
-# from django.http import JsonResponse
-# from django.contrib import messages
-
-# from wallet.models import Wallet, WalletTransaction, Payout
-# from users.models import BankingDetails
-# from users.utils.razorpay_x import initiate_payout
-
-# from decimal import Decimal
-
-
+# hardcoding 2.36 rs for IMPS payout mode 
 # @login_required
 # def wallet_transactions_view(request):
 #     user = request.user
 
-#     # ✅ Always fetch wallet before checking method
+#     # Always get wallet
 #     try:
 #         wallet = Wallet.objects.get(user=user)
 #     except Wallet.DoesNotExist:
@@ -123,119 +128,164 @@ def wallet_transactions_view(request):
 
 #     if request.method == 'POST':
 #         try:
-#             amount = float(request.POST.get('amount'))
+#             amount = Decimal(str(request.POST.get('amount')))
 #             if amount <= 0:
 #                 raise ValueError()
 #         except (TypeError, ValueError):
 #             return JsonResponse({"error": "Invalid amount"}, status=400)
 
-#         # ✅ Check wallet balance
-#         if wallet.balance < Decimal(str(amount)):
-#             return JsonResponse({"error": "Insufficient wallet balance."}, status=400)
+#         # ✅ Hardcoded IMPS fee (can later make configurable)
+#         imps_fee = Decimal("2.36")
+#         total_deduction = amount + imps_fee
 
-#         # ✅ Get user's banking details
-#         try:
-#             banking = BankingDetails.objects.get(user=user)
-#         except BankingDetails.DoesNotExist:
-#             return JsonResponse({"error": "Banking details not found."}, status=404)
+#         # ✅ Prevent duplicate submission: Check if a request_id already exists
+#         request_id = request.POST.get('request_id')
+#         if Payout.objects.filter(transaction_id=request_id).exists():
+#             messages.warning(request, "This withdrawal request was already processed.")
+#             return redirect('wallet_transactions')
 
-#         # ✅ Initiate payout via Razorpay
-#         payout_response = initiate_payout(banking.razorpay_fund_account_id, amount)
+#         # ✅ Atomic DB transaction to avoid race conditions
+#         with transaction.atomic():
+#             wallet = Wallet.objects.select_for_update().get(user=user)
 
-#         if not payout_response or 'id' not in payout_response:
-#             return JsonResponse({
-#                 "error": f"Failed to initiate payout. Response: {payout_response}"
-#             }, status=400)
+#             if wallet.balance < total_deduction:
+#                 return JsonResponse({"error": "Insufficient wallet balance."}, status=400)
 
-#         # ✅ Deduct amount from wallet
-#         wallet.balance -= Decimal(str(amount))
-#         wallet.save()
+#             # ✅ Get user's banking details
+#             try:
+#                 banking = BankingDetails.objects.get(user=user)
+#             except BankingDetails.DoesNotExist:
+#                 return JsonResponse({"error": "Banking details not found."}, status=404)
 
-#         # ✅ Create a wallet transaction
-#         WalletTransaction.objects.create(
-#             wallet=wallet,
-#             transaction_type='debit',
-#             amount=amount,
-#             description=f'Payout initiated: ₹{amount}'
-#         )
+#             # ✅ Initiate payout (for only the requested amount)
+#             payout_response = initiate_payout(banking.razorpay_fund_account_id, float(amount))
 
-#         # ✅ Save the payout
-#         Payout.objects.create(
-#             user=user,
-#             amount=amount,
-#             razorpay_payout_id=payout_response['id'],
-#             status=payout_response.get('status', 'initiated'),
-#             transaction_id=payout_response.get('reference_id') or payout_response['id']
-#         )
+#             if not payout_response or 'id' not in payout_response:
+#                 return JsonResponse({
+#                     "error": f"Failed to initiate payout. Response: {payout_response}"
+#                 }, status=400)
 
-#         messages.success(request, f'Withdrawal of ₹{amount} initiated successfully.')
+#             # ✅ Deduct from wallet (amount + fee)
+#             wallet.balance -= total_deduction
+#             wallet.save()
 
-#         # ✅ Refresh payouts & transactions
-#         transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-timestamp')
-#         payouts = Payout.objects.filter(user=user).order_by('-created_at')
+#             # ✅ Record wallet transaction
+#             WalletTransaction.objects.create(
+#                 wallet=wallet,
+#                 transaction_type='debit',
+#                 amount=total_deduction,
+#                 description=f'Payout ₹{amount} + Fee ₹{imps_fee}'
+#             )
 
+#             # ✅ Save payout with unique request_id
+#             Payout.objects.create(
+#                 user=user,
+#                 amount=amount,
+#                 razorpay_payout_id=payout_response['id'],
+#                 status=payout_response.get('status', 'initiated'),
+#                 transaction_id=request_id or str(uuid.uuid4())  # unique ID
+#             )
+
+#         messages.success(request, f'Withdrawal of ₹{amount} initiated successfully. '
+#                                   f'Fee of ₹{imps_fee} applied. Total deducted: ₹{total_deduction}.')
+
+#         # ✅ Redirect to prevent double submission on refresh
+#         return redirect('wallet_transactions')
+
+#     # GET request
 #     return render(request, 'wallet/wallet_transactions.html', {
 #         'wallet': wallet,
 #         'transactions': transactions,
 #         'payouts': payouts,
+#         'request_id': str(uuid.uuid4()),  # unique per form load
 #     })
 
 
-# from django.shortcuts import render
-# from django.contrib.auth.decorators import login_required
-# from wallet.models import WalletTransaction
 
-# from django.contrib.auth.decorators import login_required
-# from django.shortcuts import render
-# from django.http import JsonResponse
-# from .models import WalletTransaction, Payout
 
-# from django.contrib import messages
-# from users.models import BankingDetails
-# from users.utils.razorpay_x import initiate_payout
-
+# without fee+tax
 
 # @login_required
 # def wallet_transactions_view(request):
 #     user = request.user
-#     transactions = WalletTransaction.objects.filter(wallet__user=user).order_by('-timestamp')
+
+#     # Always get wallet
+#     try:
+#         wallet = Wallet.objects.get(user=user)
+#     except Wallet.DoesNotExist:
+#         return JsonResponse({"error": "Wallet not found."}, status=404)
+
+#     transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-timestamp')
 #     payouts = Payout.objects.filter(user=user).order_by('-created_at')
 
 #     if request.method == 'POST':
 #         try:
-#             amount = float(request.POST.get('amount'))
+#             amount = Decimal(str(request.POST.get('amount')))
 #             if amount <= 0:
 #                 raise ValueError()
 #         except (TypeError, ValueError):
 #             return JsonResponse({"error": "Invalid amount"}, status=400)
 
-#         # ✅ Get user's banking details
-#         try:
-#             banking = BankingDetails.objects.get(user=user)
-#         except BankingDetails.DoesNotExist:
-#             return JsonResponse({"error": "Banking details not found."}, status=404)
+#         # ✅ Prevent duplicate submission: Check if a request_id already exists
+#         request_id = request.POST.get('request_id')
+#         if Payout.objects.filter(transaction_id=request_id).exists():
+#             messages.warning(request, "This withdrawal request was already processed.")
+#             return redirect('wallet_transactions')
 
-#         # ✅ Initiate payout
-#         payout_response = initiate_payout(banking.razorpay_fund_account_id, amount)
+#         # ✅ Atomic DB transaction to avoid race conditions
+#         with transaction.atomic():
+#             wallet = Wallet.objects.select_for_update().get(user=user)
 
-#         if not payout_response or 'id' not in payout_response:
-#             return JsonResponse({"error": f"Failed to initiate payout. Response: {payout_response}"}, status=400)
+#             if wallet.balance < amount:
+#                 return JsonResponse({"error": "Insufficient wallet balance."}, status=400)
 
-#         # ✅ Save the payout
-#         Payout.objects.create(
-#             user=user,
-#             amount=amount,
-#             razorpay_payout_id=payout_response['id'],
-#             status=payout_response.get('status', 'initiated'),
-#             transaction_id = payout_response.get('reference_id') or payout_response['id']
+#             # ✅ Get user's banking details
+#             try:
+#                 banking = BankingDetails.objects.get(user=user)
+#             except BankingDetails.DoesNotExist:
+#                 return JsonResponse({"error": "Banking details not found."}, status=404)
 
-#         )
-#          # ✅ Add success message here
+#             # ✅ Initiate payout
+#             payout_response = initiate_payout(banking.razorpay_fund_account_id, float(amount))
+
+#             if not payout_response or 'id' not in payout_response:
+#                 return JsonResponse({
+#                     "error": f"Failed to initiate payout. Response: {payout_response}"
+#                 }, status=400)
+
+#             # ✅ Deduct from wallet
+#             wallet.balance -= amount
+#             wallet.save()
+
+#             # ✅ Record wallet transaction
+#             WalletTransaction.objects.create(
+#                 wallet=wallet,
+#                 transaction_type='debit',
+#                 amount=amount,
+#                 description=f'Payout initiated: ₹{amount}'
+#             )
+
+#             # ✅ Save payout with unique request_id
+#             Payout.objects.create(
+#                 user=user,
+#                 amount=amount,
+#                 razorpay_payout_id=payout_response['id'],
+#                 status=payout_response.get('status', 'initiated'),
+#                 transaction_id=request_id or str(uuid.uuid4())  # unique ID
+#             )
+
 #         messages.success(request, f'Withdrawal of ₹{amount} initiated successfully.')
-#         # ✅ Refresh payouts list
-#         payouts = Payout.objects.filter(user=user).order_by('-created_at')
 
+#         # ✅ Redirect to prevent double submission on refresh
+#         return redirect('wallet_transactions')
+
+#     # GET request
 #     return render(request, 'wallet/wallet_transactions.html', {
+#         'wallet': wallet,
 #         'transactions': transactions,
-#         'payouts': payouts
+#         'payouts': payouts,
+#         'request_id': str(uuid.uuid4()),  # unique per form load
 #     })
+
+
+
