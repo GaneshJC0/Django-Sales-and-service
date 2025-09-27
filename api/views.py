@@ -1,12 +1,9 @@
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
-from rest_framework.response import Response
 from users.models import Profile
 from .serializers import OrderSerializer, ProfileSerializer
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, mixins
 
 
 from store.models import Category, Product, ProductImage, MobileBanner
@@ -15,19 +12,15 @@ from .serializers import CategorySerializer, ProductSerializer, ProductImageSeri
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-
-from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from users.models import CustomUser
 from store.models import Product
 from cart.models import Order, OrderItem
-from rest_framework.decorators import api_view
-from rest_framework import status
-import json
-
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+import json
 from .serializers import ReferredUserSerializer
 
 @ensure_csrf_cookie
@@ -185,8 +178,8 @@ class ShippingAddressViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 import logging
 logger = logging.getLogger(__name__)
 
-@csrf_exempt
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def create_order(request):
     try:
         data = request.data
@@ -199,37 +192,42 @@ def create_order(request):
         
         
 
-        order = Order.objects.create(
-            user=user,
-            full_name=data.get('full_name', ''),
-            email=data.get('email', ''),
-            amount_paid=data.get('amount_paid', 0),
-            shipping_address=data.get('shipping_address', {})
-        )
-
-        items = data.get('items', [])
-        for item in items:
-            product_id = item.get('product_id')
-            if not product_id:
-                continue  # or handle the error appropriately
-
-            product = Product.objects.get(id=product_id)
-            
-            # Check if enough quantity is available
-            if product.stock_quantity < item.get('quantity', 1):
-                return Response({'error': f'Insufficient stock for product {product.name}'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Reduce the quantity
-            product.stock_quantity -= item.get('quantity', 1)
-            product.save()
-            
-            OrderItem.objects.create(
-                order=order,
-                product=product,
+        # Use database transaction to prevent race conditions
+        from django.db import transaction
+        
+        with transaction.atomic():
+            order = Order.objects.create(
                 user=user,
-                quantity=item.get('quantity', 1),
-                price=item.get('price', 0)
+                full_name=data.get('full_name', ''),
+                email=data.get('email', ''),
+                amount_paid=data.get('amount_paid', 0),
+                shipping_address=data.get('shipping_address', {})
             )
+
+            items = data.get('items', [])
+            for item in items:
+                product_id = item.get('product_id')
+                if not product_id:
+                    continue  # or handle the error appropriately
+
+                # Use select_for_update to prevent race conditions
+                product = Product.objects.select_for_update().get(id=product_id)
+                
+                # Check if enough quantity is available
+                if product.stock_quantity < item.get('quantity', 1):
+                    return Response({'error': f'Insufficient stock for product {product.name}'}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Reduce the quantity
+                product.stock_quantity -= item.get('quantity', 1)
+                product.save()
+                
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    user=user,
+                    quantity=item.get('quantity', 1),
+                    price=item.get('price', 0)
+                )
 
         return Response({'message': 'Order created successfully'}, status=status.HTTP_201_CREATED)
 

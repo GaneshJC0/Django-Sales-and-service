@@ -10,10 +10,17 @@ def product(request, slug):
     product = get_object_or_404(Product, slug=slug)
     product_images = product.product_images.all() 
     stock_quantity = product.stock_quantity
+    
+    # Add stock status for better UX
+    is_out_of_stock = stock_quantity <= 0
+    is_low_stock = stock_quantity <= 5 and stock_quantity > 0
+    
     context = {
         'product': product,
         'product_images': product_images,
-        'stock_quantity': stock_quantity
+        'stock_quantity': stock_quantity,
+        'is_out_of_stock': is_out_of_stock,
+        'is_low_stock': is_low_stock
     }
     return render(request, 'store/product.html', context)
 

@@ -48,11 +48,6 @@ def cart_add(request):
         cart_quantity = sum(item.quantity for item in cart.items.all())
         return JsonResponse({'qty': cart_quantity})
 
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Cart, CartItem
-from store.models import Product
-from django.contrib.auth.decorators import login_required
 
 
 

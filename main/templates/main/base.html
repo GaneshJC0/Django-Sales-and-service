@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
     <link rel="stylesheet" href="{% static 'css/login.css' %}">
     <link rel="stylesheet" href="{% static 'css/hero.css' %}">
-    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/product_card.css' %}">
     <link rel="stylesheet" href="{% static 'css/product.css' %}">
     <link rel="stylesheet" href="{% static 'css/cart.css' %}">
@@ -125,7 +124,8 @@
                     location.reload();
                 },
                 error: function(xhr, errmsg, err){
-                    // Handle error
+                    console.error('Cart update failed:', errmsg);
+                    alert('Failed to add item to cart. Please try again.');
                 }
             });
         });

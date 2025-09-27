@@ -1,10 +1,6 @@
 from django.db import models
-
 from store.models import Product
 from users.models import CustomUser
-from store.models import Product
-from users.models import CustomUser
-from django.db import models
 
 class Order(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
