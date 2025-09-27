@@ -45,6 +45,13 @@ class CustomUserRegistrationForm(UserCreationForm):
             raise forms.ValidationError("A user with this email already exists.")
         return email
 
+    def clean_pan_number(self):
+        """Ensure the PAN number is unique"""
+        pan_number = self.cleaned_data.get('pan_number')
+        if pan_number and CustomUser.objects.filter(pan_number=pan_number).exists():
+            raise forms.ValidationError("A user with this PAN number already exists.")
+        return pan_number
+
 
 class UpdateUserForm(forms.ModelForm):
     """Form to update CustomUser + Profile image"""
@@ -87,6 +94,19 @@ class UpdateUserPassword(PasswordChangeForm):
 
 class UpdateInfoForm(forms.ModelForm):
     """Form for updating user profile information"""
+    # Display user info as read-only fields
+    full_name = forms.CharField(
+        required=False, 
+        disabled=True,
+        widget=forms.TextInput(attrs={'readonly': 'readonly', 'placeholder': 'Full Name'})
+    )
+    email = forms.EmailField(
+        required=False, 
+        disabled=True,
+        widget=forms.EmailInput(attrs={'readonly': 'readonly', 'placeholder': 'Email'})
+    )
+    
+    # Editable profile fields
     phone = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Phone'}))
     address1 = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Address 1'}))
     address2 = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Address 2'}))

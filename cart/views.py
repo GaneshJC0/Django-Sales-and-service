@@ -2,15 +2,42 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.contrib.auth import login
+from django.utils.decorators import method_decorator
+from functools import wraps
 from cart.models import Cart, CartItem, Order, OrderItem
 from store.models import Product
 from users.forms import ShippingAddressForm
 from users.models import ShippingAddress
 
 
+def login_required_ajax(view_func):
+    """
+    Custom decorator that handles authentication for both regular and AJAX requests.
+    For AJAX requests, returns a JSON response indicating login is required.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return view_func(request, *args, **kwargs)
+        
+        # Check if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'error': 'Authentication required',
+                'login_required': True,
+                'login_url': '/users/login/'
+            }, status=401)
+        
+        # For regular requests, redirect to login
+        return redirect('login')
+    
+    return _wrapped_view
 
 
-@login_required
+
+
+@login_required_ajax
 def cart(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
     items = cart.items.select_related('product').all()
@@ -25,7 +52,7 @@ def cart(request):
     return render(request, 'cart/cart.html', context)
 
 
-@login_required
+@login_required_ajax
 def cart_add(request):
     if request.POST.get('product_id'):
         product_id = int(request.POST.get('product_id'))
@@ -52,7 +79,7 @@ def cart_add(request):
 
 
 
-@login_required
+@login_required_ajax
 def cart_update(request):
     if request.method == 'POST' and request.POST.get('action') == 'post':
         try:
@@ -79,7 +106,7 @@ def cart_update(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-@login_required
+@login_required_ajax
 def cart_delete(request):
     if request.POST.get('action') == 'post':
         cart_item_id = int(request.POST.get('product_id'))  # This is actually CartItem.id

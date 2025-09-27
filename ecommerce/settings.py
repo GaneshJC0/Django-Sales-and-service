@@ -194,11 +194,7 @@ RAZORPAYX_KEY_SECRET = os.getenv("RAZORPAYX_KEY_SECRET")
 
 
 
-# Pan Verification
-import os
-SETU_CLIENT_ID = os.getenv("SETU_CLIENT_ID")
-SETU_CLIENT_SECRET = os.getenv("SETU_CLIENT_SECRET")
-SETU_PRODUCT_INSTANCE_ID =os.getenv("SETU_PRODUCT_INSTANCE_ID")
+# PAN Verification settings removed - now using unique constraint instead
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

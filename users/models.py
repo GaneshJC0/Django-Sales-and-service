@@ -14,7 +14,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(auto_now=True)
     unique_id = models.CharField(max_length=50, unique=True, blank=True, null=True)
     referral_code = models.CharField(max_length=100, blank=True, null=True)
-    pan_number = models.CharField(max_length=10,  null=True, blank=True)
+    pan_number = models.CharField(max_length=10, unique=True, null=True, blank=True)
     parent_sponsor = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='sponsored_users'
     )

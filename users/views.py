@@ -8,7 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from payment import razorpay
 from .forms import (
     CustomUserRegistrationForm, UpdateUserForm, UpdateUserPassword, 
-     ShippingAddressForm
+     ShippingAddressForm, UpdateInfoForm
 )
 from .models import CustomUser, Profile, ShippingAddress
 import json
@@ -18,32 +18,9 @@ from django.contrib.auth.decorators import login_required
 from wallet.models import Wallet, WalletTransaction
 
 
-import requests
 from django.conf import settings
 
-def verify_pan(pan_number):
-    url = "https://api.stage.setu.co/api/v2/pan/verify"
-    # url = "https://dg-sandbox.setu.co/pan/v2/verify"
-    headers = {
-        "x-client-id": settings.SETU_CLIENT_ID,
-        "x-client-secret": settings.SETU_CLIENT_SECRET,
-        "x-product-instance-id": settings.SETU_PRODUCT_INSTANCE_ID,
-        "Content-Type": "application/json"
-    }
-    data = {
-        "idType": "PAN",
-        "idNumber": pan_number
-    }
-    print("Sending PAN payload:", data)
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        print("PAN API Raw Response:", response.text)
-        return response.json()
-        
-    except requests.exceptions.RequestException as e:
-        print(f"PAN verification error: {e}")
-
-        return {"status": "failed", "message": str(e)}
+# PAN verification function removed - now using unique constraint instead
 
 
 # Register User with Referral System# Register User with Referral System
@@ -70,15 +47,6 @@ def register_user(request):
     if request.method == 'POST':
         form = CustomUserRegistrationForm(request.POST)
         if form.is_valid():
-            
-            pan = form.cleaned_data.get('pan_number')
-            pan_response = verify_pan(pan)
-            print(f"PAN API Response: {pan_response}")  # Optional for debugging
-
-            if pan_response.get("status") != "success" or pan_response.get("data", {}).get("status") != "verified":
-                messages.error(request, "PAN verification failed. Please enter a valid PAN.")
-                return render(request, 'users/register.html', {'form': form})
-
             user = form.save(commit=False)
             user.parent_sponsor = parent_sponsor  # Assign sponsor
             user.save()
@@ -121,7 +89,10 @@ def login_user(request):
                         cart.db_add(product=key, quantity=value)
 
                 messages.success(request, 'Login successful!')
-                return redirect('home')
+                
+                # Redirect to next page if provided, otherwise go to home
+                next_page = request.GET.get('next', 'home')
+                return redirect(next_page)
         messages.error(request, "Invalid username or password.")
     else:
         form = AuthenticationForm()
@@ -158,8 +129,18 @@ def update_user(request):
 # Update User Profile Info
 def update_info(request):
     if request.user.is_authenticated:
-        profile = Profile.objects.get(user=request.user)
-        form = ShippingAddressForm(request.POST or None, instance=profile)
+        try:
+            profile = Profile.objects.get(user=request.user)
+        except Profile.DoesNotExist:
+            profile = Profile.objects.create(user=request.user)
+        
+        # Pre-populate form with user data
+        initial_data = {
+            'full_name': f"{request.user.first_name} {request.user.last_name}".strip(),
+            'email': request.user.email,
+        }
+        
+        form = UpdateInfoForm(request.POST or None, instance=profile, initial=initial_data)
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile info has been updated.")

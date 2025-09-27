@@ -125,6 +125,24 @@
                 },
                 error: function(xhr, errmsg, err){
                     console.error('Cart update failed:', errmsg);
+                    
+                    // Check if it's an authentication error
+                    if (xhr.status === 401) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.login_required) {
+                                // Redirect to login page
+                                window.location.href = response.login_url + '?next=' + encodeURIComponent(window.location.pathname);
+                                return;
+                            }
+                        } catch (e) {
+                            // If JSON parsing fails, fall back to regular redirect
+                            window.location.href = '/users/login/?next=' + encodeURIComponent(window.location.pathname);
+                            return;
+                        }
+                    }
+                    
+                    // For other errors, show alert
                     alert('Failed to add item to cart. Please try again.');
                 }
             });
