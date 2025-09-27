@@ -28,6 +28,8 @@
     font-size: 1.5rem;
     font-weight: 700;
     transition: transform 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .navbar-brand .logo:hover {
@@ -378,6 +380,11 @@
     .search-input:focus {
         width: 280px;
     }
+    
+    .navbar-brand .logo {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
 }
 
 @media (max-width: 768px) {
@@ -470,8 +477,10 @@
         padding: 0 0.5rem;
     }
     
-    .logo {
+    .navbar-brand .logo {
         font-size: 1.2rem !important;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     
     .logo-icon {
