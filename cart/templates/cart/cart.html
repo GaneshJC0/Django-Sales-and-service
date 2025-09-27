@@ -43,9 +43,9 @@
                 <div class="cart-item-image"><img src="{{ item.imageURL }}" alt="" width="100%"></div>
                 <div class="cart-item-name">{{ item.name }}</div>
                 <div class="cart-item-quantity"> 
-                    <button type="button" class="reduce-quantity" data-index="{{ item.product.id }}" style="padding: .3em .5em;">&minus;</button>
-                    <span class="item-quantity" data-index="{{ item.product.id }}">{{ item.quantity }}</span>
-                    <button type="button" class="add-quantity" data-index="{{ item.product.id }}" style="padding: .3em .5em;">&plus;</button>
+                    <button type="button" class="reduce-quantity" data-index="{{ item.product.id }}" style="padding: .5em .8em; min-height: 44px; min-width: 44px;">&minus;</button>
+                    <span class="item-quantity" data-index="{{ item.product.id }}" style="padding: 0.5em; font-size: 16px;">{{ item.quantity }}</span>
+                    <button type="button" class="add-quantity" data-index="{{ item.product.id }}" style="padding: .5em .8em; min-height: 44px; min-width: 44px;">&plus;</button>
                 </div>
                 {% if item.product.is_sale %}
                 <div class="cart-item-price">Rs. {{item.product.sale_price}}</div>
@@ -54,7 +54,7 @@
                 {% endif %}
                 <div class="cart-item-total">Rs. {{item.total_price}}</div>
                 <div class="cart-item-remove">
-                    <button type="button" data-index="{{ item.product.id }}" class="remove-item" style="padding: .3em .5em; background-color: red; color: white;">Remove</button>
+                    <button type="button" data-index="{{ item.product.id }}" class="remove-item" style="padding: .5em .8em; background-color: red; color: white; min-height: 44px; font-size: 16px;">Remove</button>
                 </div>
             </div>
         {% endfor %}

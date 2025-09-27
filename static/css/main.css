@@ -14,11 +14,13 @@
 
 html {
 font-size: 16px;
+overflow-x: hidden;
 }
 
 body {
 min-height: 100vh;
 width: 100%;
+overflow-x: hidden;
 }
 
 a {
@@ -32,6 +34,7 @@ cursor: pointer;
     margin: 3em auto;
     margin-bottom: 2em;
     padding: .5em;
+    max-width: 1200px;
 }
 
 .alert-message {
@@ -74,6 +77,26 @@ button {
   background-color: var(--main-color);
   border: none;
   cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5em 1em;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #e69500;
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .section-title {
@@ -83,6 +106,8 @@ button {
     display: flex;
     justify-content: space-between;
     padding: 0.5em 2em 0.5em 4em;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .product-container {
@@ -152,11 +177,90 @@ button {
 }
 
 
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        margin: 1em 0;
+        padding: 0.5em;
+    }
+    
+    .section-title {
+        flex-direction: column;
+        align-items: center;
+        padding: 1em;
+        gap: 0.5rem;
+    }
+    
+    .section-title h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .product-container {
+        justify-content: center;
+        gap: 1rem;
+    }
+}
+
 @media (max-width: 600px) {
     .container {
         width: 100%;
-        margin: 3em 0 .5em 0;
-        
+        margin: 1em 0;
+        padding: 0.25em;
+    }
+    
+    .section-title {
+        padding: 0.75em;
+    }
+    
+    .section-title h3 {
+        font-size: 1.1rem;
+    }
+    
+    .header h1 {
+        font-size: 2.5rem;
+    }
+    
+    /* Improve touch targets for mobile */
+    button {
+        min-height: 48px;
+        min-width: 48px;
+        padding: 0.75em 1.25em;
+        font-size: 1rem;
+    }
+    
+    a {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Better spacing for mobile */
+    .product-container {
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+    
+    /* Improve readability */
+    body {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    /* Prevent zoom on input focus */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+    
+    /* Improve scrolling */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Better spacing for mobile */
+    .container {
+        padding-bottom: 80px; /* Space for mobile footer */
     }
 }
 
@@ -285,8 +389,22 @@ button {
   }
   
   .foot li {
-    padding: .5em 1.5em;
+    padding: .8em 1.5em;
     text-align: center;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .foot li svg {
+    margin-bottom: 0.2em;
+  }
+  
+  .foot-menu {
+    font-size: 0.8rem;
+    font-weight: 500;
   }
   
   .foot li:hover {
@@ -312,6 +430,16 @@ button {
   @media (max-width: 600px) {
     .foot {
       display: block;
+      padding: 0.5em 0;
+    }
+    
+    .foot li {
+      padding: 0.6em 1em;
+      min-height: 55px;
+    }
+    
+    .foot-menu {
+      font-size: 0.75rem;
     }
   }
   
