@@ -25,22 +25,11 @@ text-decoration: none;
 }
 
 .alert-message {
-  width: 100%;
-  background-color: var(--main-color);
-  display: inline-block;
-  position: fixed;
-  top: 0;
-  right: 0;
-  z-index: 1001;
-  padding: .5em 1em;
-}
-
-.alert-message .close-message {
-  float: right;
-  font-size: 2rem;
-  font-weight: 800;
-  cursor: pointer;
-  color: red;
+  display: none !important; /* Hide old alert messages as they're replaced by toasts */
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
 }
 
 .admin-main-headings {

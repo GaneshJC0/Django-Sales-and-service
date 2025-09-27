@@ -78,30 +78,10 @@
         <a href="{% url 'user_profile' %}">← Back to Profile</a>
     </div>
 
-<!-- ✅ Optional: Add styling for messages -->
+<!-- Messages are now handled by toast notifications -->
 <style>
   .messages {
-      list-style-type: none;
-      padding: 10px;
-      margin: 15px 0;
-  }
-
-  .messages li {
-      padding: 10px;
-      margin-bottom: 5px;
-      border-radius: 5px;
-  }
-
-  .messages .success {
-      background-color: #d4edda;
-      color: #155724;
-      border-left: 4px solid #28a745;
-  }
-
-  .messages .error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border-left: 4px solid #dc3545;
+      display: none; /* Hide old message styling as we use toasts now */
   }
 </style>
 
