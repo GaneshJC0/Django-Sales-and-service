@@ -102,11 +102,17 @@ def wallet_transactions_view(request):
         # ✅ Redirect to prevent duplicate form submission
         return redirect('wallet_transactions')
 
-    # GET request
+    # GET request - Get bank details
+    try:
+        bank_details = BankingDetails.objects.get(user=user)
+    except BankingDetails.DoesNotExist:
+        bank_details = None
+
     return render(request, 'wallet/wallet_transactions.html', {
         'wallet': wallet,
         'transactions': transactions,
         'payouts': payouts,
+        'bank_details': bank_details,
         'request_id': str(uuid.uuid4()),  # unique per form load
     })
 

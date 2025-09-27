@@ -149,6 +149,65 @@ from .models import BankingDetails
 
 
 class BankingDetailsForm(forms.ModelForm):
+    account_holder_name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter account holder name',
+            'class': 'form-control'
+        })
+    )
+    account_number = forms.CharField(
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter account number',
+            'class': 'form-control'
+        })
+    )
+    ifsc_code = forms.CharField(
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter IFSC code',
+            'class': 'form-control'
+        })
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Enter email address',
+            'class': 'form-control'
+        })
+    )
+    phone_number = forms.CharField(
+        max_length=15,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter phone number',
+            'class': 'form-control'
+        })
+    )
+    contact_type = forms.ChoiceField(
+        choices=[('customer', 'Customer'), ('vendor', 'Vendor')],
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        })
+    )
+
     class Meta:
         model = BankingDetails
         fields = ['account_holder_name', 'account_number', 'ifsc_code', 'email', 'phone_number', 'contact_type']
+
+    def clean_account_number(self):
+        account_number = self.cleaned_data.get('account_number')
+        if account_number and not account_number.isdigit():
+            raise forms.ValidationError("Account number should contain only digits.")
+        return account_number
+
+    def clean_ifsc_code(self):
+        ifsc_code = self.cleaned_data.get('ifsc_code')
+        if ifsc_code and len(ifsc_code) != 11:
+            raise forms.ValidationError("IFSC code should be 11 characters long.")
+        return ifsc_code.upper() if ifsc_code else ifsc_code
